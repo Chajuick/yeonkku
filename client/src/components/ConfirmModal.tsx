@@ -35,7 +35,7 @@ export default function ConfirmModal({
   onCancel,
 }: ConfirmModalProps) {
   return (
-    <AlertDialog open={open} onOpenChange={(isOpen) => !isOpen && onCancel()}>
+    <AlertDialog open={open} onOpenChange={isOpen => !isOpen && onCancel()}>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>{title}</AlertDialogTitle>
@@ -45,7 +45,11 @@ export default function ConfirmModal({
           <AlertDialogCancel>{cancelText}</AlertDialogCancel>
           <AlertDialogAction
             onClick={onConfirm}
-            className={isDangerous ? "bg-destructive text-destructive-foreground hover:bg-destructive/90" : ""}
+            className={
+              isDangerous
+                ? "bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                : ""
+            }
           >
             {confirmText}
           </AlertDialogAction>

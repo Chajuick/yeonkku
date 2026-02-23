@@ -7,7 +7,10 @@
  * Decode Quoted-Printable string
  * Handles soft line breaks (=\r\n or =\n) and hex escapes (=XX)
  */
-export function decodeQuotedPrintable(encoded: string, charset: string = "utf-8"): string {
+export function decodeQuotedPrintable(
+  encoded: string,
+  charset: string = "utf-8"
+): string {
   // Step 1: Remove soft line breaks (=\r\n or =\n)
   let text = encoded.replace(/=\r\n/g, "").replace(/=\n/g, "");
 
@@ -58,7 +61,10 @@ export function decodeQuotedPrintable(encoded: string, charset: string = "utf-8"
       return new TextDecoder("utf-8").decode(uint8Array);
     }
   } catch (error) {
-    console.warn(`Failed to decode with charset ${charset}, falling back to UTF-8`, error);
+    console.warn(
+      `Failed to decode with charset ${charset}, falling back to UTF-8`,
+      error
+    );
     return new TextDecoder("utf-8", { fatal: false }).decode(uint8Array);
   }
 }
@@ -84,7 +90,7 @@ function decodeEUCKR(bytes: Uint8Array): string {
       const byte2 = bytes[i + 1];
       if (byte2 >= 0xa1 && byte2 <= 0xfe) {
         // Decode EUC-KR to Unicode
-        const code = ((byte1 - 0xa1) * 94) + (byte2 - 0xa1) + 0xac00;
+        const code = (byte1 - 0xa1) * 94 + (byte2 - 0xa1) + 0xac00;
         if (code >= 0xac00 && code <= 0xd7a3) {
           result += String.fromCharCode(code);
           i += 2;

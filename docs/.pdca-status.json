@@ -1,10 +1,7 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-02-23T09:11:16.024Z",
-  "activeFeatures": [
-    "client",
-    "yeonggu"
-  ],
+  "lastUpdated": "2026-02-23T13:48:23.522Z",
+  "activeFeatures": ["client", "yeonggu", "contexts"],
   "primaryFeature": "client",
   "features": {
     "client": {
@@ -16,9 +13,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-02-23T08:46:03.260Z",
-        "lastUpdated": "2026-02-23T09:11:16.024Z"
+        "lastUpdated": "2026-02-23T13:48:23.522Z"
       },
-      "lastFile": "C:\\Users\\USER\\Desktop\\Project\\private\\yeonggu\\client\\src\\pages\\Home.tsx"
+      "lastFile": "C:\\Users\\Windows\\Desktop\\Coding\\Project\\Personal\\yeonkku\\client\\src\\components\\BatchActionsBar.tsx"
     },
     "yeonggu": {
       "phase": "do",
@@ -32,6 +29,19 @@
         "lastUpdated": "2026-02-23T09:05:06.213Z"
       },
       "lastFile": "C:\\Users\\USER\\Desktop\\Project\\private\\yeonggu\\shared\\types.ts"
+    },
+    "contexts": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-02-23T13:35:31.152Z",
+        "lastUpdated": "2026-02-23T13:35:31.152Z"
+      },
+      "lastFile": "C:\\Users\\Windows\\Desktop\\Coding\\Project\\Personal\\yeonkku\\client\\src\\contexts\\ThemeContext.tsx"
     }
   },
   "pipeline": {
@@ -42,7 +52,7 @@
   "session": {
     "startedAt": "2026-02-23T07:56:36.499Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-02-23T09:11:16.024Z"
+    "lastActivity": "2026-02-23T13:48:23.522Z"
   },
   "history": [
     {
@@ -335,6 +345,60 @@
     },
     {
       "timestamp": "2026-02-23T09:11:16.024Z",
+      "feature": "client",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-23T13:35:17.101Z",
+      "feature": "client",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-23T13:35:31.152Z",
+      "feature": "contexts",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-23T13:37:07.475Z",
+      "feature": "client",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-23T13:37:25.695Z",
+      "feature": "client",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-23T13:38:25.692Z",
+      "feature": "client",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-23T13:38:40.140Z",
+      "feature": "client",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-23T13:38:49.985Z",
+      "feature": "client",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-23T13:38:59.263Z",
+      "feature": "client",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-23T13:48:23.522Z",
       "feature": "client",
       "phase": "do",
       "action": "updated"

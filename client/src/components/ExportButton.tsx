@@ -23,7 +23,10 @@ interface ExportButtonProps {
  * Export Button Component
  * Shows preview modal and downloads .vcf file
  */
-export default function ExportButton({ contacts, disabled = false }: ExportButtonProps) {
+export default function ExportButton({
+  contacts,
+  disabled = false,
+}: ExportButtonProps) {
   const [open, setOpen] = useState(false);
 
   const handleExport = () => {
@@ -34,7 +37,9 @@ export default function ExportButton({ contacts, disabled = false }: ExportButto
 
     try {
       const vcardContent = contactsToVCardFile(contacts);
-      const blob = new Blob([vcardContent], { type: "text/vcard;charset=utf-8" });
+      const blob = new Blob([vcardContent], {
+        type: "text/vcard;charset=utf-8",
+      });
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
@@ -75,8 +80,7 @@ export default function ExportButton({ contacts, disabled = false }: ExportButto
             <div className="text-sm text-blue-800 dark:text-blue-200">
               <p className="font-medium">
                 {i18n.exportExporting}
-                {contacts.length}
-                개
+                {contacts.length}개
               </p>
               <p>{i18n.exportFormat}</p>
             </div>

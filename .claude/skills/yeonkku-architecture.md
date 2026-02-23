@@ -31,18 +31,18 @@ shared/types (공유)
 
 ## 핵심 기술 스택
 
-| 레이어 | 기술 |
-|--------|------|
-| 빌드 | Vite 7 + esbuild |
-| 프레임워크 | React 19 |
-| 언어 | TypeScript (strict) |
-| UI | shadcn/ui + Radix UI + Tailwind CSS v4 |
-| 라우팅 | wouter |
-| 폼 | react-hook-form + zod |
-| 상태 | IndexedDB (useIndexedDBState) |
-| 서버 | Express (정적 파일 전용) |
-| 테스트 | vitest |
-| 포맷 | Prettier |
+| 레이어     | 기술                                   |
+| ---------- | -------------------------------------- |
+| 빌드       | Vite 7 + esbuild                       |
+| 프레임워크 | React 19                               |
+| 언어       | TypeScript (strict)                    |
+| UI         | shadcn/ui + Radix UI + Tailwind CSS v4 |
+| 라우팅     | wouter                                 |
+| 폼         | react-hook-form + zod                  |
+| 상태       | IndexedDB (useIndexedDBState)          |
+| 서버       | Express (정적 파일 전용)               |
+| 테스트     | vitest                                 |
+| 포맷       | Prettier                               |
 
 ## 경로 별칭
 

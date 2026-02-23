@@ -1,5 +1,11 @@
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { parseVCardText } from "@/lib/vcardParser";
 import { Contact } from "@/../../shared/types";
 import { Upload, AlertCircle } from "lucide-react";
@@ -92,7 +98,9 @@ export default function VcfImporter({ onImport }: VcfImporterProps) {
             <Upload className="w-8 h-8 text-muted-foreground" />
             <div>
               <p className="font-medium">{i18n.importDragDrop}</p>
-              <p className="text-sm text-muted-foreground">{i18n.importOrClick}</p>
+              <p className="text-sm text-muted-foreground">
+                {i18n.importOrClick}
+              </p>
             </div>
             <Button
               variant="outline"

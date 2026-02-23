@@ -1,6 +1,12 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { PrefixSuffixItem } from "@/../../shared/types";
@@ -45,15 +51,22 @@ function ItemList({
   return (
     <div className="space-y-2">
       {items.length === 0 ? (
-        <p className="text-sm text-muted-foreground py-4 text-center">{i18n.prefixSuffixEmpty}</p>
+        <p className="text-sm text-muted-foreground py-4 text-center">
+          {i18n.prefixSuffixEmpty}
+        </p>
       ) : (
         items.map((item, index) => (
           <div
             key={item.id}
             className="flex items-center gap-2 p-2 bg-muted/50 rounded-lg group"
           >
-            <Checkbox checked={item.enabled} onCheckedChange={() => onToggle(item.id)} />
-            <span className={`flex-1 ${item.enabled ? "" : "line-through text-muted-foreground"}`}>
+            <Checkbox
+              checked={item.enabled}
+              onCheckedChange={() => onToggle(item.id)}
+            />
+            <span
+              className={`flex-1 ${item.enabled ? "" : "line-through text-muted-foreground"}`}
+            >
               {item.text}
             </span>
             <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -118,22 +131,39 @@ function PrefixSuffixSection({
   const [suffixInput, setSuffixInput] = useState("");
 
   const addPrefix = () => {
-    if (!prefixInput.trim()) { toast.error(i18n.prefixSuffixEmpty2); return; }
-    if (prefixList.some((p) => p.text === prefixInput.trim())) { toast.error(i18n.prefixSuffixDuplicate); return; }
+    if (!prefixInput.trim()) {
+      toast.error(i18n.prefixSuffixEmpty2);
+      return;
+    }
+    if (prefixList.some(p => p.text === prefixInput.trim())) {
+      toast.error(i18n.prefixSuffixDuplicate);
+      return;
+    }
     onPrefixChange([...prefixList, makeItem(prefixInput.trim(), "prefix")]);
     setPrefixInput("");
     toast.success(i18n.prefixSuffixAdded);
   };
 
   const addSuffix = () => {
-    if (!suffixInput.trim()) { toast.error(i18n.prefixSuffixEmpty2); return; }
-    if (suffixList.some((s) => s.text === suffixInput.trim())) { toast.error(i18n.prefixSuffixDuplicate); return; }
+    if (!suffixInput.trim()) {
+      toast.error(i18n.prefixSuffixEmpty2);
+      return;
+    }
+    if (suffixList.some(s => s.text === suffixInput.trim())) {
+      toast.error(i18n.prefixSuffixDuplicate);
+      return;
+    }
     onSuffixChange([...suffixList, makeItem(suffixInput.trim(), "suffix")]);
     setSuffixInput("");
     toast.success(i18n.prefixSuffixAdded);
   };
 
-  const move = (list: PrefixSuffixItem[], i: number, dir: -1 | 1, onChange: (items: PrefixSuffixItem[]) => void) => {
+  const move = (
+    list: PrefixSuffixItem[],
+    i: number,
+    dir: -1 | 1,
+    onChange: (items: PrefixSuffixItem[]) => void
+  ) => {
     const next = i + dir;
     if (next < 0 || next >= list.length) return;
     const newList = [...list];
@@ -153,17 +183,30 @@ function PrefixSuffixSection({
             <Input
               placeholder={prefixPlaceholder}
               value={prefixInput}
-              onChange={(e) => setPrefixInput(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter") addPrefix(); }}
+              onChange={e => setPrefixInput(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === "Enter") addPrefix();
+              }}
             />
-            <Button onClick={addPrefix} size="sm"><Plus className="w-4 h-4" /></Button>
+            <Button onClick={addPrefix} size="sm">
+              <Plus className="w-4 h-4" />
+            </Button>
           </div>
           <ItemList
             items={prefixList}
-            onToggle={(id) => onPrefixChange(prefixList.map((p) => p.id === id ? { ...p, enabled: !p.enabled } : p))}
-            onDelete={(id) => { onPrefixChange(prefixList.filter((p) => p.id !== id)); toast.success(i18n.prefixSuffixDeleted); }}
-            onMoveUp={(i) => move(prefixList, i, -1, onPrefixChange)}
-            onMoveDown={(i) => move(prefixList, i, 1, onPrefixChange)}
+            onToggle={id =>
+              onPrefixChange(
+                prefixList.map(p =>
+                  p.id === id ? { ...p, enabled: !p.enabled } : p
+                )
+              )
+            }
+            onDelete={id => {
+              onPrefixChange(prefixList.filter(p => p.id !== id));
+              toast.success(i18n.prefixSuffixDeleted);
+            }}
+            onMoveUp={i => move(prefixList, i, -1, onPrefixChange)}
+            onMoveDown={i => move(prefixList, i, 1, onPrefixChange)}
           />
         </CardContent>
       </Card>
@@ -178,17 +221,30 @@ function PrefixSuffixSection({
             <Input
               placeholder={suffixPlaceholder}
               value={suffixInput}
-              onChange={(e) => setSuffixInput(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter") addSuffix(); }}
+              onChange={e => setSuffixInput(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === "Enter") addSuffix();
+              }}
             />
-            <Button onClick={addSuffix} size="sm"><Plus className="w-4 h-4" /></Button>
+            <Button onClick={addSuffix} size="sm">
+              <Plus className="w-4 h-4" />
+            </Button>
           </div>
           <ItemList
             items={suffixList}
-            onToggle={(id) => onSuffixChange(suffixList.map((s) => s.id === id ? { ...s, enabled: !s.enabled } : s))}
-            onDelete={(id) => { onSuffixChange(suffixList.filter((s) => s.id !== id)); toast.success(i18n.prefixSuffixDeleted); }}
-            onMoveUp={(i) => move(suffixList, i, -1, onSuffixChange)}
-            onMoveDown={(i) => move(suffixList, i, 1, onSuffixChange)}
+            onToggle={id =>
+              onSuffixChange(
+                suffixList.map(s =>
+                  s.id === id ? { ...s, enabled: !s.enabled } : s
+                )
+              )
+            }
+            onDelete={id => {
+              onSuffixChange(suffixList.filter(s => s.id !== id));
+              toast.success(i18n.prefixSuffixDeleted);
+            }}
+            onMoveUp={i => move(suffixList, i, -1, onSuffixChange)}
+            onMoveDown={i => move(suffixList, i, 1, onSuffixChange)}
           />
         </CardContent>
       </Card>

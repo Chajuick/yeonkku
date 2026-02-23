@@ -26,7 +26,7 @@ export function applyPrefixesToContact(
   prefixes: PrefixSuffixItem[],
   options: ApplyOptions
 ): Contact {
-  const enabledPrefixes = prefixes.filter((p) => p.enabled).map((p) => p.text);
+  const enabledPrefixes = prefixes.filter(p => p.enabled).map(p => p.text);
 
   if (enabledPrefixes.length === 0) {
     return contact;
@@ -70,7 +70,7 @@ export function applySuffixesToContact(
   suffixes: PrefixSuffixItem[],
   options: ApplyOptions
 ): Contact {
-  const enabledSuffixes = suffixes.filter((s) => s.enabled).map((s) => s.text);
+  const enabledSuffixes = suffixes.filter(s => s.enabled).map(s => s.text);
 
   if (enabledSuffixes.length === 0) {
     return contact;
@@ -114,7 +114,7 @@ export function removePrefixesFromContact(
   prefixes: PrefixSuffixItem[],
   options: ApplyOptions
 ): Contact {
-  const enabledPrefixes = prefixes.filter((p) => p.enabled).map((p) => p.text);
+  const enabledPrefixes = prefixes.filter(p => p.enabled).map(p => p.text);
 
   if (enabledPrefixes.length === 0) {
     return contact;
@@ -134,7 +134,9 @@ export function removePrefixesFromContact(
   if (options.applyToNField && contact.n?.prefix) {
     let newPrefix = contact.n.prefix;
     for (const prefix of enabledPrefixes) {
-      const pattern = new RegExp(`^${escapeRegex(prefix)}(?:${prefixSep}|\\s*)`);
+      const pattern = new RegExp(
+        `^${escapeRegex(prefix)}(?:${prefixSep}|\\s*)`
+      );
       newPrefix = newPrefix.replace(pattern, "");
     }
     newN = { ...contact.n, prefix: newPrefix };
@@ -155,7 +157,7 @@ export function removeSuffixesFromContact(
   suffixes: PrefixSuffixItem[],
   options: ApplyOptions
 ): Contact {
-  const enabledSuffixes = suffixes.filter((s) => s.enabled).map((s) => s.text);
+  const enabledSuffixes = suffixes.filter(s => s.enabled).map(s => s.text);
 
   if (enabledSuffixes.length === 0) {
     return contact;
@@ -175,7 +177,9 @@ export function removeSuffixesFromContact(
   if (options.applyToNField && contact.n?.suffix) {
     let newSuffix = contact.n.suffix;
     for (const suffix of enabledSuffixes) {
-      const pattern = new RegExp(`(?:${suffixSep}|\\s*)${escapeRegex(suffix)}$`);
+      const pattern = new RegExp(
+        `(?:${suffixSep}|\\s*)${escapeRegex(suffix)}$`
+      );
       newSuffix = newSuffix.replace(pattern, "");
     }
     newN = { ...contact.n, suffix: newSuffix };
@@ -203,7 +207,7 @@ export function applyPrefixesToOrg(
   prefixes: PrefixSuffixItem[],
   options: ApplyOptions
 ): Contact {
-  const enabledPrefixes = prefixes.filter((p) => p.enabled).map((p) => p.text);
+  const enabledPrefixes = prefixes.filter(p => p.enabled).map(p => p.text);
   if (enabledPrefixes.length === 0 || !contact.org) return contact;
 
   let newOrg = contact.org;
@@ -222,7 +226,7 @@ export function applySuffixesToOrg(
   suffixes: PrefixSuffixItem[],
   options: ApplyOptions
 ): Contact {
-  const enabledSuffixes = suffixes.filter((s) => s.enabled).map((s) => s.text);
+  const enabledSuffixes = suffixes.filter(s => s.enabled).map(s => s.text);
   if (enabledSuffixes.length === 0 || !contact.org) return contact;
 
   let newOrg = contact.org;
@@ -241,7 +245,7 @@ export function removePrefixesFromOrg(
   prefixes: PrefixSuffixItem[],
   options: ApplyOptions
 ): Contact {
-  const enabledPrefixes = prefixes.filter((p) => p.enabled).map((p) => p.text);
+  const enabledPrefixes = prefixes.filter(p => p.enabled).map(p => p.text);
   if (enabledPrefixes.length === 0 || !contact.org) return contact;
 
   const sep = escapeRegex(options.prefixSeparator);
@@ -261,7 +265,7 @@ export function removeSuffixesFromOrg(
   suffixes: PrefixSuffixItem[],
   options: ApplyOptions
 ): Contact {
-  const enabledSuffixes = suffixes.filter((s) => s.enabled).map((s) => s.text);
+  const enabledSuffixes = suffixes.filter(s => s.enabled).map(s => s.text);
   if (enabledSuffixes.length === 0 || !contact.org) return contact;
 
   const sep = escapeRegex(options.suffixSeparator);
@@ -286,7 +290,7 @@ export function batchApplyPrefixSuffix(
   action: "add" | "remove",
   options: ApplyOptions
 ): Contact[] {
-  return contacts.map((contact) => {
+  return contacts.map(contact => {
     if (!selectedIds.has(contact.id)) return contact;
 
     let updated = contact;

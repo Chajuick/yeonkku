@@ -25,6 +25,7 @@ pnpm start    # 프로덕션 서버 실행
 ```
 
 **커밋 전 순서:**
+
 1. `pnpm check` - 타입 오류 0개 확인
 2. `pnpm format` - 전체 파일 자동 포맷
 3. `pnpm build` - 빌드 성공 확인

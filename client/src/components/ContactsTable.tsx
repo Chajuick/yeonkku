@@ -1,8 +1,20 @@
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Contact } from "@/../../shared/types";
 import { ChevronDown, ChevronUp, Search, Trash2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -40,19 +52,22 @@ export default function ContactsTable({
   }>({ key: "fn", direction: "asc" });
 
   // Unique company list for filter dropdown
-  const uniqueCompanies = Array.from(new Set(
-    contacts.map((c) => c.org).filter((org): org is string => Boolean(org))
-  )).sort();
+  const uniqueCompanies = Array.from(
+    new Set(
+      contacts.map(c => c.org).filter((org): org is string => Boolean(org))
+    )
+  ).sort();
 
   // Filter contacts based on search term and company filter
-  const filteredContacts = contacts.filter((contact) => {
+  const filteredContacts = contacts.filter(contact => {
     const searchLower = searchTerm.toLowerCase();
     const searchMatch =
       contact.fn.toLowerCase().includes(searchLower) ||
       contact.org?.toLowerCase().includes(searchLower) ||
-      contact.tel?.some((t) => t.toLowerCase().includes(searchLower)) ||
-      contact.email?.some((e) => e.toLowerCase().includes(searchLower));
-    const companyMatch = companyFilter === "all" || contact.org === companyFilter;
+      contact.tel?.some(t => t.toLowerCase().includes(searchLower)) ||
+      contact.email?.some(e => e.toLowerCase().includes(searchLower));
+    const companyMatch =
+      companyFilter === "all" || contact.org === companyFilter;
     return searchMatch && companyMatch;
   });
 
@@ -80,7 +95,7 @@ export default function ContactsTable({
   // Handle select all
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      onSelectionChange(new Set(sortedContacts.map((c) => c.id)));
+      onSelectionChange(new Set(sortedContacts.map(c => c.id)));
     } else {
       onSelectionChange(new Set());
     }
@@ -105,7 +120,7 @@ export default function ContactsTable({
   };
 
   const saveEdit = (id: string) => {
-    const contact = contacts.find((c) => c.id === id);
+    const contact = contacts.find(c => c.id === id);
     if (contact) {
       if (editingField === "fn" && editValue.trim()) {
         onContactUpdate({ ...contact, fn: editValue.trim() });
@@ -132,7 +147,7 @@ export default function ContactsTable({
   }, [editingId]);
 
   const handleSort = (key: keyof Contact | "tel" | "email") => {
-    setSortConfig((prev) => ({
+    setSortConfig(prev => ({
       key,
       direction: prev.key === key && prev.direction === "asc" ? "desc" : "asc",
     }));
@@ -150,13 +165,12 @@ export default function ContactsTable({
       className="flex items-center gap-1 hover:text-primary transition-colors"
     >
       {label}
-      {sortConfig.key === sortKey && (
-        sortConfig.direction === "asc" ? (
+      {sortConfig.key === sortKey &&
+        (sortConfig.direction === "asc" ? (
           <ChevronUp className="w-4 h-4" />
         ) : (
           <ChevronDown className="w-4 h-4" />
-        )
-      )}
+        ))}
     </button>
   );
 
@@ -164,10 +178,12 @@ export default function ContactsTable({
     <Card>
       <CardHeader>
         <CardTitle>
-          {i18n.contactsTitle} ({filteredContacts.length}{i18n.contactsCount})
+          {i18n.contactsTitle} ({filteredContacts.length}
+          {i18n.contactsCount})
         </CardTitle>
         <CardDescription>
-          {selectedIds.size > 0 && `${selectedIds.size}${i18n.contactsSelected}`}
+          {selectedIds.size > 0 &&
+            `${selectedIds.size}${i18n.contactsSelected}`}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -178,7 +194,7 @@ export default function ContactsTable({
             <Input
               placeholder={i18n.contactsSearch}
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={e => setSearchTerm(e.target.value)}
               className="pl-10"
             />
           </div>
@@ -189,7 +205,7 @@ export default function ContactsTable({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">{i18n.filterAllCompanies}</SelectItem>
-                {uniqueCompanies.map((company) => (
+                {uniqueCompanies.map(company => (
                   <SelectItem key={company} value={company}>
                     {company}
                   </SelectItem>
@@ -208,7 +224,7 @@ export default function ContactsTable({
                   <Checkbox
                     checked={
                       sortedContacts.length > 0 &&
-                      sortedContacts.every((c) => selectedIds.has(c.id))
+                      sortedContacts.every(c => selectedIds.has(c.id))
                     }
                     onCheckedChange={handleSelectAll}
                   />
@@ -225,19 +241,26 @@ export default function ContactsTable({
                 <th className="px-4 py-3 text-left font-medium">
                   <SortHeader label={i18n.contactsTableEmail} sortKey="email" />
                 </th>
-                <th className="px-4 py-3 text-left font-medium">{i18n.contactsTableNote}</th>
-                <th className="px-4 py-3 text-left font-medium">{i18n.contactsTableAction}</th>
+                <th className="px-4 py-3 text-left font-medium">
+                  {i18n.contactsTableNote}
+                </th>
+                <th className="px-4 py-3 text-left font-medium">
+                  {i18n.contactsTableAction}
+                </th>
               </tr>
             </thead>
             <tbody>
               {sortedContacts.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">
+                  <td
+                    colSpan={7}
+                    className="px-4 py-8 text-center text-muted-foreground"
+                  >
                     {i18n.contactsEmpty}
                   </td>
                 </tr>
               ) : (
-                sortedContacts.map((contact) => (
+                sortedContacts.map(contact => (
                   <tr
                     key={contact.id}
                     className="border-b hover:bg-muted/30 transition-colors"
@@ -245,7 +268,7 @@ export default function ContactsTable({
                     <td className="px-4 py-3">
                       <Checkbox
                         checked={selectedIds.has(contact.id)}
-                        onCheckedChange={(checked) =>
+                        onCheckedChange={checked =>
                           handleSelectOne(contact.id, checked as boolean)
                         }
                       />
@@ -256,8 +279,8 @@ export default function ContactsTable({
                           <Input
                             ref={editInputRef}
                             value={editValue}
-                            onChange={(e) => setEditValue(e.target.value)}
-                            onKeyDown={(e) => {
+                            onChange={e => setEditValue(e.target.value)}
+                            onKeyDown={e => {
                               if (e.key === "Enter") saveEdit(contact.id);
                               if (e.key === "Escape") cancelEdit();
                             }}
@@ -286,8 +309,8 @@ export default function ContactsTable({
                           <Input
                             ref={editInputRef}
                             value={editValue}
-                            onChange={(e) => setEditValue(e.target.value)}
-                            onKeyDown={(e) => {
+                            onChange={e => setEditValue(e.target.value)}
+                            onKeyDown={e => {
                               if (e.key === "Enter") saveEdit(contact.id);
                               if (e.key === "Escape") cancelEdit();
                             }}
@@ -307,7 +330,9 @@ export default function ContactsTable({
                           onClick={() => startEdit(contact, "org")}
                           className="hover:text-primary hover:underline text-left w-full text-left"
                         >
-                          {contact.org || <span className="text-muted-foreground">-</span>}
+                          {contact.org || (
+                            <span className="text-muted-foreground">-</span>
+                          )}
                         </button>
                       )}
                     </td>
@@ -319,7 +344,10 @@ export default function ContactsTable({
                     </td>
                     <td className="px-4 py-3 text-sm">
                       {contact.note ? (
-                        <span title={contact.note} className="truncate block max-w-xs">
+                        <span
+                          title={contact.note}
+                          className="truncate block max-w-xs"
+                        >
                           {contact.note}
                         </span>
                       ) : (

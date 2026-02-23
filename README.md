@@ -5,12 +5,14 @@ React + TypeScript + Vite 기반의 **로컬 전용 vCard 편집 웹앱**입니�
 ## 주요 기능
 
 ### 📥 vCard 업로드
+
 - **Drag & Drop** 또는 파일 선택으로 .vcf 파일 업로드
 - vCard 2.1, 3.0, 4.0 형식 지원
 - 한 파일에 여러 연락처 포함 가능
 - 자동 파싱 및 내부 Contact 배열로 변환
 
 ### 📋 연락처 편집 (표 형식)
+
 - **스프레드시트 스타일** 테이블 UI
 - 체크박스로 다중 선택
 - 필수 컬럼: ID, 표시이름(FN), 이름 구성요소(N), 전화, 이메일, 메모
@@ -20,6 +22,7 @@ React + TypeScript + Vite 기반의 **로컬 전용 vCard 편집 웹앱**입니�
 - 개별 연락처 삭제
 
 ### 🎨 Prefix/Suffix 관리
+
 - **Prefix 목록**: 이름 앞에 붙일 텍스트/이모지 관리
 - **Suffix 목록**: 이름 뒤에 붙일 텍스트/이모지 관리
 - 각 항목별 활성화/비활성화 토글
@@ -28,6 +31,7 @@ React + TypeScript + Vite 기반의 **로컬 전용 vCard 편집 웹앱**입니�
 - **중복 방지**: 같은 텍스트가 이미 있으면 다시 붙이지 않음 (옵션)
 
 ### ⚡ 일괄 적용
+
 - 선택된 연락처에 체크된 prefix/suffix 일괄 추가/제거
 - **적용 방식**:
   - 기본: FN(표시이름)에만 적용
@@ -36,12 +40,14 @@ React + TypeScript + Vite 기반의 **로컬 전용 vCard 편집 웹앱**입니�
 - 배치 작업 상태 표시 (선택 수, 활성화된 prefix/suffix 표시)
 
 ### 💾 상태 저장
+
 - **IndexedDB 우선**: 브라우저의 IndexedDB에 자동 저장
 - **localStorage 폴백**: IndexedDB 사용 불가 시 자동으로 localStorage 사용
 - 새로고침해도 모든 데이터 유지
 - 저장된 상태: contacts, prefixList, suffixList, UI 설정
 
 ### 📤 내보내기
+
 - 현재 연락처를 .vcf 파일로 다운로드
 - **vCard 3.0 형식**으로 직렬화
 - 원본이 4.0/2.1이면 가능한 범위에서 호환성 유지
@@ -49,6 +55,7 @@ React + TypeScript + Vite 기반의 **로컬 전용 vCard 편집 웹앱**입니�
 - 파일명: `yeonkku_export_YYYYMMDD.vcf`
 
 ### ⚙️ 설정
+
 - **구분자 설정**: Prefix/Suffix 적용 시 사용할 구분자 커스터마이징
 - **중복 방지 옵션**: 이미 있는 prefix/suffix 재적용 방지
 - **N 필드 적용 옵션**: 구조화된 이름 필드에도 반영 여부 선택
@@ -132,27 +139,32 @@ pnpm check
 ## 사용 예시
 
 ### 1. 연락처 가져오기
+
 1. "Contacts" 탭에서 .vcf 파일 드래그 앤 드롭 또는 "Select File" 클릭
 2. 파일이 자동으로 파싱되고 테이블에 표시됨
 
 ### 2. Prefix/Suffix 설정
+
 1. "Prefix/Suffix" 탭으로 이동
 2. Prefix 입력 필드에 "Dr.", "Mr." 등 입력 후 "+" 버튼 클릭
 3. Suffix 입력 필드에 "Jr.", "PhD" 등 입력
 4. 필요시 순서 변경 (위/아래 버튼)
 
 ### 3. 연락처에 일괄 적용
+
 1. "Contacts" 탭에서 연락처 선택 (체크박스)
 2. 하단의 "Batch Actions Bar"에서 적용할 prefix/suffix 선택
 3. "Apply to Selected" 클릭하여 일괄 적용
 4. 또는 "Remove from Selected"로 제거
 
 ### 4. 설정 조정
+
 1. "Settings" 탭에서 구분자 설정
 2. 옵션 토글 (중복 방지, N 필드 적용)
 3. "Save Separators" 클릭
 
 ### 5. 내보내기
+
 1. "Export" 탭으로 이동
 2. "Export as .vcf" 버튼 클릭
 3. 미리보기 확인 후 "Download" 클릭
@@ -161,21 +173,25 @@ pnpm check
 ## 핵심 구현 사항
 
 ### vCard 파싱
+
 - **라인 폴딩 처리**: 줄바꿈 + 공백으로 이어진 라인 자동 병합
 - **필드 추출**: FN, N, TEL, EMAIL, NOTE 등 주요 필드 파싱
 - **버전 감지**: vCard 2.1, 3.0, 4.0 자동 인식
 
 ### Prefix/Suffix 적용
+
 - **중복 방지**: 이미 포함된 텍스트는 재적용 안 함
 - **구분자 처리**: prefix는 뒤에, suffix는 앞에 공백 추가
 - **N 필드 지원**: 구조화된 이름의 prefix/suffix 필드에도 반영 가능
 
 ### 상태 관리
+
 - **IndexedDB 우선**: 대용량 데이터 저장 가능
 - **localStorage 폴백**: IndexedDB 미지원 환경 대응
 - **자동 저장**: 500ms 디바운싱으로 성능 최적화
 
 ### 로컬 전용
+
 - **네트워크 요청 금지**: 모든 처리가 브라우저에서만 발생
 - **개인정보 보호**: 서버로 데이터 전송 없음
 - **오프라인 작동**: 인터넷 연결 없이도 완전히 작동

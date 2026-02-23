@@ -33,10 +33,10 @@ export default function BatchActionsBar({
   onOrgSuffixToggle,
 }: BatchActionsBarProps) {
   const hasEnabledItems =
-    prefixList.some((p) => p.enabled) ||
-    suffixList.some((s) => s.enabled) ||
-    orgPrefixList.some((p) => p.enabled) ||
-    orgSuffixList.some((s) => s.enabled);
+    prefixList.some(p => p.enabled) ||
+    suffixList.some(s => s.enabled) ||
+    orgPrefixList.some(p => p.enabled) ||
+    orgSuffixList.some(s => s.enabled);
 
   if (selectedCount === 0) return null;
 
@@ -48,21 +48,24 @@ export default function BatchActionsBar({
             <div className="flex items-center gap-2">
               <Zap className="w-5 h-5 text-amber-500" />
               <span className="font-medium">
-                {selectedCount}{i18n.batchSelected}
+                {selectedCount}
+                {i18n.batchSelected}
               </span>
             </div>
 
             {/* 이름 Prefixes — 전체 표시, 클릭으로 토글 */}
             {prefixList.length > 0 && (
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-sm text-muted-foreground">{i18n.batchPrefixes}</span>
-                {prefixList.map((p) => (
+                <span className="text-sm text-muted-foreground">
+                  {i18n.batchPrefixes}
+                </span>
+                {prefixList.map(p => (
                   <button
                     key={p.id}
                     onClick={() => onPrefixToggle(p.id)}
                     className={`px-2 py-1 rounded text-sm transition-opacity ${
                       p.enabled
-                        ? "bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-100 hover:opacity-75"
+                        ? "tag-primary hover:opacity-75"
                         : "bg-muted text-muted-foreground line-through hover:opacity-75"
                     }`}
                   >
@@ -75,14 +78,16 @@ export default function BatchActionsBar({
             {/* 이름 Suffixes — 전체 표시 */}
             {suffixList.length > 0 && (
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-sm text-muted-foreground">{i18n.batchSuffixes}</span>
-                {suffixList.map((s) => (
+                <span className="text-sm text-muted-foreground">
+                  {i18n.batchSuffixes}
+                </span>
+                {suffixList.map(s => (
                   <button
                     key={s.id}
                     onClick={() => onSuffixToggle(s.id)}
                     className={`px-2 py-1 rounded text-sm transition-opacity ${
                       s.enabled
-                        ? "bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-100 hover:opacity-75"
+                        ? "tag-secondary hover:opacity-75"
                         : "bg-muted text-muted-foreground line-through hover:opacity-75"
                     }`}
                   >
@@ -95,14 +100,16 @@ export default function BatchActionsBar({
             {/* 회사 Prefixes — 전체 표시 */}
             {orgPrefixList.length > 0 && (
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-sm text-muted-foreground">{i18n.batchOrgPrefixes}</span>
-                {orgPrefixList.map((p) => (
+                <span className="text-sm text-muted-foreground">
+                  {i18n.batchOrgPrefixes}
+                </span>
+                {orgPrefixList.map(p => (
                   <button
                     key={p.id}
                     onClick={() => onOrgPrefixToggle(p.id)}
                     className={`px-2 py-1 rounded text-sm transition-opacity ${
                       p.enabled
-                        ? "bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-100 hover:opacity-75"
+                        ? "tag-accent hover:opacity-75"
                         : "bg-muted text-muted-foreground line-through hover:opacity-75"
                     }`}
                   >
@@ -115,14 +122,16 @@ export default function BatchActionsBar({
             {/* 회사 Suffixes — 전체 표시 */}
             {orgSuffixList.length > 0 && (
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-sm text-muted-foreground">{i18n.batchOrgSuffixes}</span>
-                {orgSuffixList.map((s) => (
+                <span className="text-sm text-muted-foreground">
+                  {i18n.batchOrgSuffixes}
+                </span>
+                {orgSuffixList.map(s => (
                   <button
                     key={s.id}
                     onClick={() => onOrgSuffixToggle(s.id)}
                     className={`px-2 py-1 rounded text-sm transition-opacity ${
                       s.enabled
-                        ? "bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-100 hover:opacity-75"
+                        ? "tag-highlight hover:opacity-75"
                         : "bg-muted text-muted-foreground line-through hover:opacity-75"
                     }`}
                   >
@@ -135,10 +144,20 @@ export default function BatchActionsBar({
 
           {/* Action Buttons */}
           <div className="flex gap-2 flex-wrap">
-            <Button onClick={onApplyAdd} disabled={!hasEnabledItems} variant="default" size="sm">
+            <Button
+              onClick={onApplyAdd}
+              disabled={!hasEnabledItems}
+              variant="default"
+              size="sm"
+            >
               {i18n.batchApply}
             </Button>
-            <Button onClick={onApplyRemove} disabled={!hasEnabledItems} variant="outline" size="sm">
+            <Button
+              onClick={onApplyRemove}
+              disabled={!hasEnabledItems}
+              variant="outline"
+              size="sm"
+            >
               {i18n.batchRemove}
             </Button>
           </div>

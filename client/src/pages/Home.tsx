@@ -1,6 +1,12 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -11,10 +17,18 @@ import BatchActionsBar from "@/components/BatchActionsBar";
 import BatchPreviewModal from "@/components/BatchPreviewModal";
 import ExportButton from "@/components/ExportButton";
 import ConfirmModal from "@/components/ConfirmModal";
+import ThemeSelector from "@/components/ThemeSelector";
 import { useIndexedDBState } from "@/hooks/useIndexedDBState";
 import { batchApplyPrefixSuffix } from "@/lib/batchApply";
 import { Contact, PrefixSuffixItem } from "@/../../shared/types";
-import { Settings, Trash2 } from "lucide-react";
+import {
+  Settings,
+  Trash2,
+  BookOpen,
+  Tags,
+  Download,
+  Palette,
+} from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { i18n } from "@/lib/i18n";
@@ -24,16 +38,26 @@ import { i18n } from "@/lib/i18n";
  * Orchestrates all features: import, edit, manage prefixes/suffixes, batch apply, export
  */
 export default function Home() {
-  const { state, updateState, saveToUndo, undo, canUndo, resetState, isLoading } = useIndexedDBState();
+  const {
+    state,
+    updateState,
+    saveToUndo,
+    undo,
+    canUndo,
+    resetState,
+    isLoading,
+  } = useIndexedDBState();
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
-  const [pendingAction, setPendingAction] = useState<"add" | "remove" | null>(null);
+  const [pendingAction, setPendingAction] = useState<"add" | "remove" | null>(
+    null
+  );
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-muted-foreground">로딩 중...</p>
+      <div className="min-h-screen diary-bg flex items-center justify-center">
+        <p className="text-muted-foreground font-body">로딩 중...</p>
       </div>
     );
   }
@@ -49,16 +73,16 @@ export default function Home() {
   // Handle contact update
   const handleContactUpdate = (contact: Contact) => {
     updateState({
-      contacts: state.contacts.map((c) => (c.id === contact.id ? contact : c)),
+      contacts: state.contacts.map(c => (c.id === contact.id ? contact : c)),
     });
   };
 
   // Handle contact delete
   const handleContactDelete = (id: string) => {
     updateState({
-      contacts: state.contacts.filter((c) => c.id !== id),
+      contacts: state.contacts.filter(c => c.id !== id),
     });
-    setSelectedIds((prev) => {
+    setSelectedIds(prev => {
       const newSet = new Set(prev);
       newSet.delete(id);
       return newSet;
@@ -94,8 +118,10 @@ export default function Home() {
   // Compute preview items for the modal
   const previewItems = pendingAction
     ? batchApplyPrefixSuffix(
-        state.contacts.filter((c) => selectedIds.has(c.id)),
-        new Set(state.contacts.filter((c) => selectedIds.has(c.id)).map((c) => c.id)),
+        state.contacts.filter(c => selectedIds.has(c.id)),
+        new Set(
+          state.contacts.filter(c => selectedIds.has(c.id)).map(c => c.id)
+        ),
         state.prefixList,
         state.suffixList,
         state.orgPrefixList,
@@ -103,7 +129,7 @@ export default function Home() {
         pendingAction,
         state.settings
       ).map((updated, i) => {
-        const original = state.contacts.filter((c) => selectedIds.has(c.id))[i];
+        const original = state.contacts.filter(c => selectedIds.has(c.id))[i];
         return {
           id: updated.id,
           before: original.fn,
@@ -145,7 +171,10 @@ export default function Home() {
   };
 
   // Handle separator change (auto-save)
-  const handleSeparatorChange = (key: "prefixSeparator" | "suffixSeparator", value: string) => {
+  const handleSeparatorChange = (
+    key: "prefixSeparator" | "suffixSeparator",
+    value: string
+  ) => {
     updateState({
       settings: { ...state.settings, [key]: value },
     });
@@ -161,40 +190,94 @@ export default function Home() {
 
   // Toggle prefix enabled
   const togglePrefixEnabled = (id: string) => {
-    handlePrefixChange(state.prefixList.map((p) => p.id === id ? { ...p, enabled: !p.enabled } : p));
+    handlePrefixChange(
+      state.prefixList.map(p =>
+        p.id === id ? { ...p, enabled: !p.enabled } : p
+      )
+    );
   };
 
   // Toggle suffix enabled
   const toggleSuffixEnabled = (id: string) => {
-    handleSuffixChange(state.suffixList.map((s) => s.id === id ? { ...s, enabled: !s.enabled } : s));
+    handleSuffixChange(
+      state.suffixList.map(s =>
+        s.id === id ? { ...s, enabled: !s.enabled } : s
+      )
+    );
   };
 
   // Toggle org prefix enabled
   const toggleOrgPrefixEnabled = (id: string) => {
-    handleOrgPrefixChange(state.orgPrefixList.map((p) => p.id === id ? { ...p, enabled: !p.enabled } : p));
+    handleOrgPrefixChange(
+      state.orgPrefixList.map(p =>
+        p.id === id ? { ...p, enabled: !p.enabled } : p
+      )
+    );
   };
 
   // Toggle org suffix enabled
   const toggleOrgSuffixEnabled = (id: string) => {
-    handleOrgSuffixChange(state.orgSuffixList.map((s) => s.id === id ? { ...s, enabled: !s.enabled } : s));
+    handleOrgSuffixChange(
+      state.orgSuffixList.map(s =>
+        s.id === id ? { ...s, enabled: !s.enabled } : s
+      )
+    );
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 py-8">
+    <div className="min-h-screen diary-bg py-8">
       <div className="max-w-7xl mx-auto px-4 space-y-8">
         {/* Header */}
-        <div className="text-center space-y-2">
-          <h1 className="text-4xl font-bold tracking-tight">{i18n.appTitle}</h1>
-          <p className="text-lg text-muted-foreground">{i18n.appSubtitle}</p>
+        <div className="text-center py-4 space-y-2 relative">
+          <div className="flex items-center justify-center gap-4 mb-2">
+            <hr className="diary-divider w-16" />
+            <span className="text-muted-foreground text-xs tracking-widest uppercase">
+              연락처 관리
+            </span>
+            <hr className="diary-divider w-16" />
+          </div>
+          <h1 className="text-5xl font-heading font-bold tracking-tight text-foreground">
+            {i18n.appTitle}
+          </h1>
+          <p className="text-base text-muted-foreground font-body">
+            {i18n.appSubtitle}
+          </p>
+          <div className="flex items-center justify-center gap-4 mt-2">
+            <hr className="diary-divider w-24" />
+          </div>
         </div>
 
         {/* Main Tabs */}
         <Tabs defaultValue="contacts" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="contacts">{i18n.tabContacts}</TabsTrigger>
-            <TabsTrigger value="prefixsuffix">{i18n.tabPrefixSuffix}</TabsTrigger>
-            <TabsTrigger value="settings">{i18n.tabSettings}</TabsTrigger>
-            <TabsTrigger value="export">{i18n.tabExport}</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-4 rounded-2xl p-1">
+            <TabsTrigger
+              value="contacts"
+              className="flex items-center gap-1.5 rounded-xl"
+            >
+              <BookOpen className="w-4 h-4" />
+              <span className="hidden sm:inline">{i18n.tabContacts}</span>
+            </TabsTrigger>
+            <TabsTrigger
+              value="prefixsuffix"
+              className="flex items-center gap-1.5 rounded-xl"
+            >
+              <Tags className="w-4 h-4" />
+              <span className="hidden sm:inline">{i18n.tabPrefixSuffix}</span>
+            </TabsTrigger>
+            <TabsTrigger
+              value="settings"
+              className="flex items-center gap-1.5 rounded-xl"
+            >
+              <Settings className="w-4 h-4" />
+              <span className="hidden sm:inline">{i18n.tabSettings}</span>
+            </TabsTrigger>
+            <TabsTrigger
+              value="export"
+              className="flex items-center gap-1.5 rounded-xl"
+            >
+              <Download className="w-4 h-4" />
+              <span className="hidden sm:inline">{i18n.tabExport}</span>
+            </TabsTrigger>
           </TabsList>
 
           {/* Contacts Tab */}
@@ -263,16 +346,31 @@ export default function Home() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
+                {/* Theme Section */}
+                <div className="space-y-4">
+                  <h3 className="font-semibold flex items-center gap-2">
+                    <Palette className="w-4 h-4" />
+                    테마
+                  </h3>
+                  <ThemeSelector />
+                </div>
+
+                <hr className="diary-divider" />
+
                 {/* Separator Settings */}
                 <div className="space-y-4">
                   <h3 className="font-semibold">{i18n.settingsSeparators}</h3>
 
                   <div className="space-y-2">
-                    <Label htmlFor="prefix-sep">{i18n.settingsPrefixSeparator}</Label>
+                    <Label htmlFor="prefix-sep">
+                      {i18n.settingsPrefixSeparator}
+                    </Label>
                     <Input
                       id="prefix-sep"
                       value={state.settings.prefixSeparator}
-                      onChange={(e) => handleSeparatorChange("prefixSeparator", e.target.value)}
+                      onChange={e =>
+                        handleSeparatorChange("prefixSeparator", e.target.value)
+                      }
                       placeholder="공백"
                       maxLength={5}
                     />
@@ -282,11 +380,15 @@ export default function Home() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="suffix-sep">{i18n.settingsSuffixSeparator}</Label>
+                    <Label htmlFor="suffix-sep">
+                      {i18n.settingsSuffixSeparator}
+                    </Label>
                     <Input
                       id="suffix-sep"
                       value={state.settings.suffixSeparator}
-                      onChange={(e) => handleSeparatorChange("suffixSeparator", e.target.value)}
+                      onChange={e =>
+                        handleSeparatorChange("suffixSeparator", e.target.value)
+                      }
                       placeholder="공백"
                       maxLength={5}
                     />
@@ -301,11 +403,13 @@ export default function Home() {
                   <h3 className="font-semibold">{i18n.settingsOptions}</h3>
 
                   <div className="flex items-center justify-between">
-                    <Label htmlFor="prevent-dup">{i18n.settingsPreventDuplicates}</Label>
+                    <Label htmlFor="prevent-dup">
+                      {i18n.settingsPreventDuplicates}
+                    </Label>
                     <Switch
                       id="prevent-dup"
                       checked={state.settings.preventDuplicates}
-                      onCheckedChange={(checked) => {
+                      onCheckedChange={checked => {
                         updateState({
                           settings: {
                             ...state.settings,
@@ -320,11 +424,13 @@ export default function Home() {
                   </p>
 
                   <div className="flex items-center justify-between">
-                    <Label htmlFor="apply-n-field">{i18n.settingsApplyToNField}</Label>
+                    <Label htmlFor="apply-n-field">
+                      {i18n.settingsApplyToNField}
+                    </Label>
                     <Switch
                       id="apply-n-field"
                       checked={state.settings.applyToNField}
-                      onCheckedChange={(checked) => {
+                      onCheckedChange={checked => {
                         updateState({
                           settings: {
                             ...state.settings,
@@ -341,7 +447,9 @@ export default function Home() {
 
                 {/* Danger Zone */}
                 <div className="space-y-4 border-t pt-4">
-                  <h3 className="font-semibold text-destructive">{i18n.settingsDangerZone}</h3>
+                  <h3 className="font-semibold text-destructive">
+                    {i18n.settingsDangerZone}
+                  </h3>
                   <Button
                     variant="destructive"
                     onClick={() => setConfirmOpen(true)}
@@ -350,7 +458,9 @@ export default function Home() {
                     <Trash2 className="w-4 h-4 mr-2" />
                     {i18n.settingsClearAll}
                   </Button>
-                  <p className="text-xs text-muted-foreground">{i18n.settingsClearAllDesc}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {i18n.settingsClearAllDesc}
+                  </p>
                 </div>
               </CardContent>
             </Card>
@@ -383,7 +493,10 @@ export default function Home() {
         preview={previewItems}
         totalSelected={selectedIds.size}
         onConfirm={handleConfirmApply}
-        onCancel={() => { setPreviewOpen(false); setPendingAction(null); }}
+        onCancel={() => {
+          setPreviewOpen(false);
+          setPendingAction(null);
+        }}
       />
 
       {/* Confirm Modal */}

@@ -11,12 +11,12 @@
 
 ## 문서 생성 대상
 
-| 파일 | 문서화 내용 |
-|------|------------|
-| `shared/types.ts` | Contact, AppState, PrefixSuffixItem 타입 설명 |
-| `lib/vcardParser.ts` | 파싱 함수 입출력 명세 |
-| `lib/storage.ts` | IndexedDB 저장소 API |
-| `hooks/useIndexedDBState.ts` | 훅 사용법 및 반환값 |
+| 파일                         | 문서화 내용                                   |
+| ---------------------------- | --------------------------------------------- |
+| `shared/types.ts`            | Contact, AppState, PrefixSuffixItem 타입 설명 |
+| `lib/vcardParser.ts`         | 파싱 함수 입출력 명세                         |
+| `lib/storage.ts`             | IndexedDB 저장소 API                          |
+| `hooks/useIndexedDBState.ts` | 훅 사용법 및 반환값                           |
 
 ## 사용 시점
 

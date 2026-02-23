@@ -14,7 +14,7 @@ function initDB(): Promise<IDBDatabase> {
     request.onerror = () => reject(request.error);
     request.onsuccess = () => resolve(request.result);
 
-    request.onupgradeneeded = (event) => {
+    request.onupgradeneeded = event => {
       const db = (event.target as IDBOpenDBRequest).result;
       if (!db.objectStoreNames.contains(STORE_NAME)) {
         db.createObjectStore(STORE_NAME);
@@ -38,7 +38,10 @@ export async function saveAppState(state: AppState): Promise<void> {
       request.onsuccess = () => resolve();
     });
   } catch (error) {
-    console.error("Failed to save to IndexedDB, falling back to localStorage", error);
+    console.error(
+      "Failed to save to IndexedDB, falling back to localStorage",
+      error
+    );
     // Fallback to localStorage
     try {
       localStorage.setItem("yeonkku_state", JSON.stringify(state));

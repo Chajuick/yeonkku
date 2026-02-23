@@ -67,6 +67,7 @@ const [location] = useLocation();
 ## SPA 서버 설정
 
 Express 서버가 모든 경로를 `index.html`로 리다이렉트 (SPA 방식):
+
 ```typescript
 // server/index.ts
 app.get("*", (_req, res) => {

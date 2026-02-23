@@ -1,5 +1,10 @@
 import { AppState, Contact } from "@/../../shared/types";
-import { clearAppState, getDefaultAppState, loadAppState, saveAppState } from "@/lib/storage";
+import {
+  clearAppState,
+  getDefaultAppState,
+  loadAppState,
+  saveAppState,
+} from "@/lib/storage";
 import { useEffect, useRef, useState } from "react";
 
 const MAX_UNDO_STEPS = 10;
@@ -18,7 +23,9 @@ export function useIndexedDBState() {
       try {
         const loaded = await loadAppState();
         // Merge with defaults to handle missing fields from older stored data
-        setState(loaded ? { ...getDefaultAppState(), ...loaded } : getDefaultAppState());
+        setState(
+          loaded ? { ...getDefaultAppState(), ...loaded } : getDefaultAppState()
+        );
       } catch (error) {
         console.error("Failed to load state:", error);
         setState(getDefaultAppState());
@@ -34,7 +41,7 @@ export function useIndexedDBState() {
   useEffect(() => {
     if (state && !isLoading) {
       const timer = setTimeout(() => {
-        saveAppState(state).catch((error) => {
+        saveAppState(state).catch(error => {
           console.error("Failed to save state:", error);
         });
       }, 500); // Debounce saves
@@ -44,7 +51,7 @@ export function useIndexedDBState() {
   }, [state, isLoading]);
 
   const updateState = (updates: Partial<AppState>) => {
-    setState((prev) => {
+    setState(prev => {
       if (!prev) return prev;
       return { ...prev, ...updates };
     });
@@ -62,7 +69,7 @@ export function useIndexedDBState() {
     if (undoStackRef.current.length === 0) return;
     const previous = undoStackRef.current[undoStackRef.current.length - 1];
     undoStackRef.current = undoStackRef.current.slice(0, -1);
-    setState((prev) => {
+    setState(prev => {
       if (!prev) return prev;
       return { ...prev, contacts: previous };
     });

@@ -77,11 +77,11 @@ export function ContactsTable({ contacts, onSelect }: ContactsTableProps) {
 
 ## 주요 UI 패키지
 
-| 패키지 | 용도 |
-|--------|------|
-| `framer-motion` | 복잡한 애니메이션 |
-| `lucide-react` | 아이콘 |
-| `sonner` | 토스트 알림 |
-| `recharts` | 차트 (필요 시) |
-| `react-resizable-panels` | 패널 레이아웃 |
-| `embla-carousel-react` | 캐러셀 |
+| 패키지                   | 용도              |
+| ------------------------ | ----------------- |
+| `framer-motion`          | 복잡한 애니메이션 |
+| `lucide-react`           | 아이콘            |
+| `sonner`                 | 토스트 알림       |
+| `recharts`               | 차트 (필요 시)    |
+| `react-resizable-panels` | 패널 레이아웃     |
+| `embla-carousel-react`   | 캐러셀            |

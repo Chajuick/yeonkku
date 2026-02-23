@@ -81,12 +81,15 @@ export const i18n = {
   settingsSave: "구분자 저장",
   settingsOptions: "옵션",
   settingsPreventDuplicates: "중복 방지",
-  settingsPreventDuplicatesDesc: "이름에 이미 있는 prefix/suffix는 다시 붙이지 않기",
+  settingsPreventDuplicatesDesc:
+    "이름에 이미 있는 prefix/suffix는 다시 붙이지 않기",
   settingsApplyToNField: "N 필드에도 적용",
-  settingsApplyToNFieldDesc: "구조화된 이름(N 필드)의 prefix/suffix 필드에도 반영",
+  settingsApplyToNFieldDesc:
+    "구조화된 이름(N 필드)의 prefix/suffix 필드에도 반영",
   settingsDangerZone: "위험 영역",
   settingsClearAll: "모든 데이터 삭제",
-  settingsClearAllDesc: "모든 연락처와 설정을 삭제합니다. 이 작업은 되돌릴 수 없습니다.",
+  settingsClearAllDesc:
+    "모든 연락처와 설정을 삭제합니다. 이 작업은 되돌릴 수 없습니다.",
   settingsSaved: "설정이 저장되었습니다",
 
   // Export

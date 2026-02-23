@@ -54,7 +54,11 @@ function parseVCardBlock(vcardText: string): ParsedVCard {
     const trimmed = line.trim();
 
     // Skip empty lines and BEGIN/END markers
-    if (!trimmed || trimmed.startsWith("BEGIN:") || trimmed.startsWith("END:")) {
+    if (
+      !trimmed ||
+      trimmed.startsWith("BEGIN:") ||
+      trimmed.startsWith("END:")
+    ) {
       continue;
     }
 
@@ -89,11 +93,17 @@ function parseVCardBlock(vcardText: string): ParsedVCard {
     const encoding = params.get("ENCODING") || "";
     const charset = params.get("CHARSET") || "utf-8";
 
-    if (encoding.toUpperCase() === "QUOTED-PRINTABLE" || isQuotedPrintable(value)) {
+    if (
+      encoding.toUpperCase() === "QUOTED-PRINTABLE" ||
+      isQuotedPrintable(value)
+    ) {
       try {
         value = decodeQuotedPrintable(value, charset);
       } catch (error) {
-        console.warn(`Failed to decode Quoted-Printable for ${fieldName}:`, error);
+        console.warn(
+          `Failed to decode Quoted-Printable for ${fieldName}:`,
+          error
+        );
       }
     }
 
@@ -112,7 +122,7 @@ function parseVCardBlock(vcardText: string): ParsedVCard {
  * Format: Family;Given;Additional;Prefix;Suffix
  */
 function parseNField(nValue: string) {
-  const parts = nValue.split(";").map((p) => p.trim());
+  const parts = nValue.split(";").map(p => p.trim());
   return {
     family: parts[0] || undefined,
     given: parts[1] || undefined,
@@ -125,7 +135,9 @@ function parseNField(nValue: string) {
 /**
  * Extract first value from field array
  */
-function getFirstFieldValue(fieldArray: FieldValue[] | undefined): string | undefined {
+function getFirstFieldValue(
+  fieldArray: FieldValue[] | undefined
+): string | undefined {
   if (!fieldArray || fieldArray.length === 0) return undefined;
   return fieldArray[0].value;
 }
@@ -154,12 +166,8 @@ export function parseVCardText(text: string): Contact[] {
     // Extract tel and email arrays
     const telArray = fields.get("TEL") || [];
     const emailArray = fields.get("EMAIL") || [];
-    const tel = telArray
-      .map((t) => t.value || "")
-      .filter((t) => t);
-    const email = emailArray
-      .map((e) => e.value || "")
-      .filter((e) => e);
+    const tel = telArray.map(t => t.value || "").filter(t => t);
+    const email = emailArray.map(e => e.value || "").filter(e => e);
 
     const contact: Contact = {
       id: nanoid(),
@@ -212,7 +220,16 @@ function escapeVCardValue(value: string): string {
  * Fields managed by this app — these are replaced with current values on export.
  * All other fields from rawVCard are preserved as-is.
  */
-const MANAGED_FIELDS = new Set(["FN", "N", "ORG", "TEL", "EMAIL", "NOTE", "VERSION", "PRODID"]);
+const MANAGED_FIELDS = new Set([
+  "FN",
+  "N",
+  "ORG",
+  "TEL",
+  "EMAIL",
+  "NOTE",
+  "VERSION",
+  "PRODID",
+]);
 
 /**
  * Build managed vCard lines from a Contact object
@@ -249,7 +266,8 @@ function buildManagedLines(contact: Contact): string[] {
 
   // EMAIL
   for (const email of contact.email ?? []) {
-    if (email.trim()) lines.push(...foldLine(`EMAIL:${escapeVCardValue(email)}`));
+    if (email.trim())
+      lines.push(...foldLine(`EMAIL:${escapeVCardValue(email)}`));
   }
 
   // NOTE
@@ -281,7 +299,8 @@ export function contactToVCard(contact: Contact): string {
       const trimmed = line.trim();
       if (!trimmed) continue;
       const upper = trimmed.toUpperCase();
-      if (upper.startsWith("BEGIN:VCARD") || upper.startsWith("END:VCARD")) continue;
+      if (upper.startsWith("BEGIN:VCARD") || upper.startsWith("END:VCARD"))
+        continue;
       const fieldName = upper.split(/[;:]/)[0];
       if (!MANAGED_FIELDS.has(fieldName)) {
         lines.push(...foldLine(trimmed));
