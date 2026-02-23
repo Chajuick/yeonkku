@@ -103,6 +103,8 @@ export function getDefaultAppState(): AppState {
     contacts: [],
     prefixList: [],
     suffixList: [],
+    orgPrefixList: [],
+    orgSuffixList: [],
     settings: {
       preventDuplicates: true,
       prefixSeparator: " ",

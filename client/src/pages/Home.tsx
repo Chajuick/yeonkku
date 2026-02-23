@@ -8,6 +8,7 @@ import VcfImporter from "@/components/VcfImporter";
 import ContactsTable from "@/components/ContactsTable";
 import PrefixSuffixManager from "@/components/PrefixSuffixManager";
 import BatchActionsBar from "@/components/BatchActionsBar";
+import BatchPreviewModal from "@/components/BatchPreviewModal";
 import ExportButton from "@/components/ExportButton";
 import ConfirmModal from "@/components/ConfirmModal";
 import { useIndexedDBState } from "@/hooks/useIndexedDBState";
@@ -23,11 +24,11 @@ import { i18n } from "@/lib/i18n";
  * Orchestrates all features: import, edit, manage prefixes/suffixes, batch apply, export
  */
 export default function Home() {
-  const { state, updateState, resetState, isLoading } = useIndexedDBState();
+  const { state, updateState, saveToUndo, undo, canUndo, resetState, isLoading } = useIndexedDBState();
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const [prefixSeparator, setPrefixSeparator] = useState(state.settings.prefixSeparator);
-  const [suffixSeparator, setSuffixSeparator] = useState(state.settings.suffixSeparator);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [pendingAction, setPendingAction] = useState<"add" | "remove" | null>(null);
 
   if (isLoading) {
     return (
@@ -66,49 +67,88 @@ export default function Home() {
 
   // Handle prefix list change
   const handlePrefixChange = (prefixes: PrefixSuffixItem[]) => {
-    updateState({
-      prefixList: prefixes,
-    });
+    updateState({ prefixList: prefixes });
   };
 
   // Handle suffix list change
   const handleSuffixChange = (suffixes: PrefixSuffixItem[]) => {
-    updateState({
-      suffixList: suffixes,
-    });
+    updateState({ suffixList: suffixes });
   };
 
-  // Handle batch apply
+  // Handle org prefix list change
+  const handleOrgPrefixChange = (prefixes: PrefixSuffixItem[]) => {
+    updateState({ orgPrefixList: prefixes });
+  };
+
+  // Handle org suffix list change
+  const handleOrgSuffixChange = (suffixes: PrefixSuffixItem[]) => {
+    updateState({ orgSuffixList: suffixes });
+  };
+
+  // Open preview modal before batch apply
   const handleBatchApply = (action: "add" | "remove") => {
+    setPendingAction(action);
+    setPreviewOpen(true);
+  };
+
+  // Compute preview items for the modal
+  const previewItems = pendingAction
+    ? batchApplyPrefixSuffix(
+        state.contacts.filter((c) => selectedIds.has(c.id)),
+        new Set(state.contacts.filter((c) => selectedIds.has(c.id)).map((c) => c.id)),
+        state.prefixList,
+        state.suffixList,
+        state.orgPrefixList,
+        state.orgSuffixList,
+        pendingAction,
+        state.settings
+      ).map((updated, i) => {
+        const original = state.contacts.filter((c) => selectedIds.has(c.id))[i];
+        return {
+          id: updated.id,
+          before: original.fn,
+          after: updated.fn,
+          orgBefore: original.org,
+          orgAfter: updated.org,
+        };
+      })
+    : [];
+
+  // Actually apply after preview confirmation
+  const handleConfirmApply = () => {
+    if (!pendingAction) return;
+    setPreviewOpen(false);
+    saveToUndo();
+
     const updated = batchApplyPrefixSuffix(
       state.contacts,
       selectedIds,
       state.prefixList,
       state.suffixList,
-      action,
-      {
-        ...state.settings,
-        prefixSeparator,
-        suffixSeparator,
-      }
+      state.orgPrefixList,
+      state.orgSuffixList,
+      pendingAction,
+      state.settings
     );
 
     updateState({ contacts: updated });
     toast.success(
-      `${selectedIds.size}개 연락처에 ${action === "add" ? "적용" : "제거"}되었습니다`
+      `${selectedIds.size}개 연락처에 ${pendingAction === "add" ? "적용" : "제거"}되었습니다`,
+      {
+        action: {
+          label: "되돌리기",
+          onClick: undo,
+        },
+      }
     );
+    setPendingAction(null);
   };
 
-  // Handle settings update
-  const handleSettingsUpdate = () => {
+  // Handle separator change (auto-save)
+  const handleSeparatorChange = (key: "prefixSeparator" | "suffixSeparator", value: string) => {
     updateState({
-      settings: {
-        ...state.settings,
-        prefixSeparator,
-        suffixSeparator,
-      },
+      settings: { ...state.settings, [key]: value },
     });
-    toast.success(i18n.settingsSaved);
   };
 
   // Handle reset
@@ -121,18 +161,22 @@ export default function Home() {
 
   // Toggle prefix enabled
   const togglePrefixEnabled = (id: string) => {
-    const updated = state.prefixList.map((p) =>
-      p.id === id ? { ...p, enabled: !p.enabled } : p
-    );
-    handlePrefixChange(updated);
+    handlePrefixChange(state.prefixList.map((p) => p.id === id ? { ...p, enabled: !p.enabled } : p));
   };
 
   // Toggle suffix enabled
   const toggleSuffixEnabled = (id: string) => {
-    const updated = state.suffixList.map((s) =>
-      s.id === id ? { ...s, enabled: !s.enabled } : s
-    );
-    handleSuffixChange(updated);
+    handleSuffixChange(state.suffixList.map((s) => s.id === id ? { ...s, enabled: !s.enabled } : s));
+  };
+
+  // Toggle org prefix enabled
+  const toggleOrgPrefixEnabled = (id: string) => {
+    handleOrgPrefixChange(state.orgPrefixList.map((p) => p.id === id ? { ...p, enabled: !p.enabled } : p));
+  };
+
+  // Toggle org suffix enabled
+  const toggleOrgSuffixEnabled = (id: string) => {
+    handleOrgSuffixChange(state.orgSuffixList.map((s) => s.id === id ? { ...s, enabled: !s.enabled } : s));
   };
 
   return (
@@ -170,10 +214,14 @@ export default function Home() {
                   selectedCount={selectedIds.size}
                   prefixList={state.prefixList}
                   suffixList={state.suffixList}
+                  orgPrefixList={state.orgPrefixList}
+                  orgSuffixList={state.orgSuffixList}
                   onApplyAdd={() => handleBatchApply("add")}
                   onApplyRemove={() => handleBatchApply("remove")}
                   onPrefixToggle={togglePrefixEnabled}
                   onSuffixToggle={toggleSuffixEnabled}
+                  onOrgPrefixToggle={toggleOrgPrefixEnabled}
+                  onOrgSuffixToggle={toggleOrgSuffixEnabled}
                 />
               </>
             )}
@@ -196,8 +244,12 @@ export default function Home() {
             <PrefixSuffixManager
               prefixList={state.prefixList}
               suffixList={state.suffixList}
+              orgPrefixList={state.orgPrefixList}
+              orgSuffixList={state.orgSuffixList}
               onPrefixChange={handlePrefixChange}
               onSuffixChange={handleSuffixChange}
+              onOrgPrefixChange={handleOrgPrefixChange}
+              onOrgSuffixChange={handleOrgSuffixChange}
             />
           </TabsContent>
 
@@ -219,8 +271,8 @@ export default function Home() {
                     <Label htmlFor="prefix-sep">{i18n.settingsPrefixSeparator}</Label>
                     <Input
                       id="prefix-sep"
-                      value={prefixSeparator}
-                      onChange={(e) => setPrefixSeparator(e.target.value)}
+                      value={state.settings.prefixSeparator}
+                      onChange={(e) => handleSeparatorChange("prefixSeparator", e.target.value)}
                       placeholder="공백"
                       maxLength={5}
                     />
@@ -233,8 +285,8 @@ export default function Home() {
                     <Label htmlFor="suffix-sep">{i18n.settingsSuffixSeparator}</Label>
                     <Input
                       id="suffix-sep"
-                      value={suffixSeparator}
-                      onChange={(e) => setSuffixSeparator(e.target.value)}
+                      value={state.settings.suffixSeparator}
+                      onChange={(e) => handleSeparatorChange("suffixSeparator", e.target.value)}
                       placeholder="공백"
                       maxLength={5}
                     />
@@ -242,10 +294,6 @@ export default function Home() {
                       예: "John" + " " + "Jr." = "John Jr."
                     </p>
                   </div>
-
-                  <Button onClick={handleSettingsUpdate} variant="outline">
-                    {i18n.settingsSave}
-                  </Button>
                 </div>
 
                 {/* Options */}
@@ -327,6 +375,16 @@ export default function Home() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Batch Preview Modal */}
+      <BatchPreviewModal
+        open={previewOpen}
+        action={pendingAction ?? "add"}
+        preview={previewItems}
+        totalSelected={selectedIds.size}
+        onConfirm={handleConfirmApply}
+        onCancel={() => { setPreviewOpen(false); setPendingAction(null); }}
+      />
 
       {/* Confirm Modal */}
       <ConfirmModal

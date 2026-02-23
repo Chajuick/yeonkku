@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { PrefixSuffixItem } from "@/../../shared/types";
 import { Plus, Trash2, ChevronUp, ChevronDown } from "lucide-react";
@@ -11,149 +12,40 @@ import { i18n } from "@/lib/i18n";
 interface PrefixSuffixManagerProps {
   prefixList: PrefixSuffixItem[];
   suffixList: PrefixSuffixItem[];
+  orgPrefixList: PrefixSuffixItem[];
+  orgSuffixList: PrefixSuffixItem[];
   onPrefixChange: (prefixes: PrefixSuffixItem[]) => void;
   onSuffixChange: (suffixes: PrefixSuffixItem[]) => void;
+  onOrgPrefixChange: (prefixes: PrefixSuffixItem[]) => void;
+  onOrgSuffixChange: (suffixes: PrefixSuffixItem[]) => void;
 }
 
-/**
- * Prefix/Suffix Manager Component
- * Manage prefix and suffix items with add, edit, delete, and reorder
- */
-export default function PrefixSuffixManager({
-  prefixList,
-  suffixList,
-  onPrefixChange,
-  onSuffixChange,
-}: PrefixSuffixManagerProps) {
-  const [prefixInput, setPrefixInput] = useState("");
-  const [suffixInput, setSuffixInput] = useState("");
-
-  // Add new prefix
-  const addPrefix = () => {
-    if (!prefixInput.trim()) {
-      toast.error(i18n.prefixSuffixEmpty2);
-      return;
-    }
-
-    // Check for duplicates
-    if (prefixList.some((p) => p.text === prefixInput.trim())) {
-      toast.error(i18n.prefixSuffixDuplicate);
-      return;
-    }
-
-    const newPrefix: PrefixSuffixItem = {
-      id: `prefix_${Date.now()}`,
-      text: prefixInput.trim(),
-      enabled: true,
-      type: "prefix",
-    };
-
-    onPrefixChange([...prefixList, newPrefix]);
-    setPrefixInput("");
-    toast.success(i18n.prefixSuffixAdded);
+function makeItem(text: string, type: "prefix" | "suffix"): PrefixSuffixItem {
+  return {
+    id: `${type}_${Date.now()}_${Math.random().toString(36).substring(7)}`,
+    text,
+    enabled: true,
+    type,
   };
+}
 
-  // Add new suffix
-  const addSuffix = () => {
-    if (!suffixInput.trim()) {
-      toast.error(i18n.prefixSuffixEmpty2);
-      return;
-    }
-
-    // Check for duplicates
-    if (suffixList.some((s) => s.text === suffixInput.trim())) {
-      toast.error(i18n.prefixSuffixDuplicate);
-      return;
-    }
-
-    const newSuffix: PrefixSuffixItem = {
-      id: `suffix_${Date.now()}`,
-      text: suffixInput.trim(),
-      enabled: true,
-      type: "suffix",
-    };
-
-    onSuffixChange([...suffixList, newSuffix]);
-    setSuffixInput("");
-    toast.success(i18n.prefixSuffixAdded);
-  };
-
-  // Delete prefix
-  const deletePrefix = (id: string) => {
-    onPrefixChange(prefixList.filter((p) => p.id !== id));
-    toast.success(i18n.prefixSuffixDeleted);
-  };
-
-  // Delete suffix
-  const deleteSuffix = (id: string) => {
-    onSuffixChange(suffixList.filter((s) => s.id !== id));
-    toast.success(i18n.prefixSuffixDeleted);
-  };
-
-  // Toggle prefix enabled
-  const togglePrefix = (id: string) => {
-    onPrefixChange(
-      prefixList.map((p) => (p.id === id ? { ...p, enabled: !p.enabled } : p))
-    );
-  };
-
-  // Toggle suffix enabled
-  const toggleSuffix = (id: string) => {
-    onSuffixChange(
-      suffixList.map((s) => (s.id === id ? { ...s, enabled: !s.enabled } : s))
-    );
-  };
-
-  // Move prefix up
-  const movePrefixUp = (index: number) => {
-    if (index === 0) return;
-    const newList = [...prefixList];
-    [newList[index - 1], newList[index]] = [newList[index], newList[index - 1]];
-    onPrefixChange(newList);
-  };
-
-  // Move prefix down
-  const movePrefixDown = (index: number) => {
-    if (index === prefixList.length - 1) return;
-    const newList = [...prefixList];
-    [newList[index], newList[index + 1]] = [newList[index + 1], newList[index]];
-    onPrefixChange(newList);
-  };
-
-  // Move suffix up
-  const moveSuffixUp = (index: number) => {
-    if (index === 0) return;
-    const newList = [...suffixList];
-    [newList[index - 1], newList[index]] = [newList[index], newList[index - 1]];
-    onSuffixChange(newList);
-  };
-
-  // Move suffix down
-  const moveSuffixDown = (index: number) => {
-    if (index === suffixList.length - 1) return;
-    const newList = [...suffixList];
-    [newList[index], newList[index + 1]] = [newList[index + 1], newList[index]];
-    onSuffixChange(newList);
-  };
-
-  const ItemList = ({
-    items,
-    onToggle,
-    onDelete,
-    onMoveUp,
-    onMoveDown,
-    placeholder,
-  }: {
-    items: PrefixSuffixItem[];
-    onToggle: (id: string) => void;
-    onDelete: (id: string) => void;
-    onMoveUp: (index: number) => void;
-    onMoveDown: (index: number) => void;
-    placeholder: string;
-  }) => (
+function ItemList({
+  items,
+  onToggle,
+  onDelete,
+  onMoveUp,
+  onMoveDown,
+}: {
+  items: PrefixSuffixItem[];
+  onToggle: (id: string) => void;
+  onDelete: (id: string) => void;
+  onMoveUp: (index: number) => void;
+  onMoveDown: (index: number) => void;
+}) {
+  return (
     <div className="space-y-2">
       {items.length === 0 ? (
-        <p className="text-sm text-muted-foreground py-4 text-center">{placeholder}</p>
+        <p className="text-sm text-muted-foreground py-4 text-center">{i18n.prefixSuffixEmpty}</p>
       ) : (
         items.map((item, index) => (
           <div
@@ -197,72 +89,159 @@ export default function PrefixSuffixManager({
       )}
     </div>
   );
+}
+
+function PrefixSuffixSection({
+  prefixList,
+  suffixList,
+  prefixPlaceholder,
+  suffixPlaceholder,
+  prefixTitle,
+  prefixDescription,
+  suffixTitle,
+  suffixDescription,
+  onPrefixChange,
+  onSuffixChange,
+}: {
+  prefixList: PrefixSuffixItem[];
+  suffixList: PrefixSuffixItem[];
+  prefixPlaceholder: string;
+  suffixPlaceholder: string;
+  prefixTitle: string;
+  prefixDescription: string;
+  suffixTitle: string;
+  suffixDescription: string;
+  onPrefixChange: (items: PrefixSuffixItem[]) => void;
+  onSuffixChange: (items: PrefixSuffixItem[]) => void;
+}) {
+  const [prefixInput, setPrefixInput] = useState("");
+  const [suffixInput, setSuffixInput] = useState("");
+
+  const addPrefix = () => {
+    if (!prefixInput.trim()) { toast.error(i18n.prefixSuffixEmpty2); return; }
+    if (prefixList.some((p) => p.text === prefixInput.trim())) { toast.error(i18n.prefixSuffixDuplicate); return; }
+    onPrefixChange([...prefixList, makeItem(prefixInput.trim(), "prefix")]);
+    setPrefixInput("");
+    toast.success(i18n.prefixSuffixAdded);
+  };
+
+  const addSuffix = () => {
+    if (!suffixInput.trim()) { toast.error(i18n.prefixSuffixEmpty2); return; }
+    if (suffixList.some((s) => s.text === suffixInput.trim())) { toast.error(i18n.prefixSuffixDuplicate); return; }
+    onSuffixChange([...suffixList, makeItem(suffixInput.trim(), "suffix")]);
+    setSuffixInput("");
+    toast.success(i18n.prefixSuffixAdded);
+  };
+
+  const move = (list: PrefixSuffixItem[], i: number, dir: -1 | 1, onChange: (items: PrefixSuffixItem[]) => void) => {
+    const next = i + dir;
+    if (next < 0 || next >= list.length) return;
+    const newList = [...list];
+    [newList[i], newList[next]] = [newList[next], newList[i]];
+    onChange(newList);
+  };
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      {/* Prefix Manager */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">{i18n.prefixTitle}</CardTitle>
-          <CardDescription>{i18n.prefixDescription}</CardDescription>
+          <CardTitle className="text-lg">{prefixTitle}</CardTitle>
+          <CardDescription>{prefixDescription}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex gap-2">
             <Input
-              placeholder={i18n.prefixPlaceholder}
+              placeholder={prefixPlaceholder}
               value={prefixInput}
               onChange={(e) => setPrefixInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") addPrefix();
-              }}
+              onKeyDown={(e) => { if (e.key === "Enter") addPrefix(); }}
             />
-            <Button onClick={addPrefix} size="sm">
-              <Plus className="w-4 h-4" />
-            </Button>
+            <Button onClick={addPrefix} size="sm"><Plus className="w-4 h-4" /></Button>
           </div>
-
           <ItemList
             items={prefixList}
-            onToggle={togglePrefix}
-            onDelete={deletePrefix}
-            onMoveUp={movePrefixUp}
-            onMoveDown={movePrefixDown}
-            placeholder={i18n.prefixSuffixEmpty}
+            onToggle={(id) => onPrefixChange(prefixList.map((p) => p.id === id ? { ...p, enabled: !p.enabled } : p))}
+            onDelete={(id) => { onPrefixChange(prefixList.filter((p) => p.id !== id)); toast.success(i18n.prefixSuffixDeleted); }}
+            onMoveUp={(i) => move(prefixList, i, -1, onPrefixChange)}
+            onMoveDown={(i) => move(prefixList, i, 1, onPrefixChange)}
           />
         </CardContent>
       </Card>
 
-      {/* Suffix Manager */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">{i18n.suffixTitle}</CardTitle>
-          <CardDescription>{i18n.suffixDescription}</CardDescription>
+          <CardTitle className="text-lg">{suffixTitle}</CardTitle>
+          <CardDescription>{suffixDescription}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex gap-2">
             <Input
-              placeholder={i18n.suffixPlaceholder}
+              placeholder={suffixPlaceholder}
               value={suffixInput}
               onChange={(e) => setSuffixInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") addSuffix();
-              }}
+              onKeyDown={(e) => { if (e.key === "Enter") addSuffix(); }}
             />
-            <Button onClick={addSuffix} size="sm">
-              <Plus className="w-4 h-4" />
-            </Button>
+            <Button onClick={addSuffix} size="sm"><Plus className="w-4 h-4" /></Button>
           </div>
-
           <ItemList
             items={suffixList}
-            onToggle={toggleSuffix}
-            onDelete={deleteSuffix}
-            onMoveUp={moveSuffixUp}
-            onMoveDown={moveSuffixDown}
-            placeholder={i18n.prefixSuffixEmpty}
+            onToggle={(id) => onSuffixChange(suffixList.map((s) => s.id === id ? { ...s, enabled: !s.enabled } : s))}
+            onDelete={(id) => { onSuffixChange(suffixList.filter((s) => s.id !== id)); toast.success(i18n.prefixSuffixDeleted); }}
+            onMoveUp={(i) => move(suffixList, i, -1, onSuffixChange)}
+            onMoveDown={(i) => move(suffixList, i, 1, onSuffixChange)}
           />
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export default function PrefixSuffixManager({
+  prefixList,
+  suffixList,
+  orgPrefixList,
+  orgSuffixList,
+  onPrefixChange,
+  onSuffixChange,
+  onOrgPrefixChange,
+  onOrgSuffixChange,
+}: PrefixSuffixManagerProps) {
+  return (
+    <Tabs defaultValue="name">
+      <TabsList className="mb-4">
+        <TabsTrigger value="name">{i18n.tabName}</TabsTrigger>
+        <TabsTrigger value="org">{i18n.tabOrg}</TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="name">
+        <PrefixSuffixSection
+          prefixList={prefixList}
+          suffixList={suffixList}
+          prefixTitle={i18n.prefixTitle}
+          prefixDescription={i18n.prefixDescription}
+          prefixPlaceholder={i18n.prefixPlaceholder}
+          suffixTitle={i18n.suffixTitle}
+          suffixDescription={i18n.suffixDescription}
+          suffixPlaceholder={i18n.suffixPlaceholder}
+          onPrefixChange={onPrefixChange}
+          onSuffixChange={onSuffixChange}
+        />
+      </TabsContent>
+
+      <TabsContent value="org">
+        <PrefixSuffixSection
+          prefixList={orgPrefixList}
+          suffixList={orgSuffixList}
+          prefixTitle={i18n.orgPrefixTitle}
+          prefixDescription={i18n.orgPrefixDescription}
+          prefixPlaceholder={i18n.orgPrefixPlaceholder}
+          suffixTitle={i18n.orgSuffixTitle}
+          suffixDescription={i18n.orgSuffixDescription}
+          suffixPlaceholder={i18n.orgSuffixPlaceholder}
+          onPrefixChange={onOrgPrefixChange}
+          onSuffixChange={onOrgSuffixChange}
+        />
+      </TabsContent>
+    </Tabs>
   );
 }

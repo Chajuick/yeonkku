@@ -1,3 +1,4 @@
+import { nanoid } from "nanoid";
 import { Contact } from "@/../../shared/types";
 import {
   decodeQuotedPrintable,
@@ -161,9 +162,10 @@ export function parseVCardText(text: string): Contact[] {
       .filter((e) => e);
 
     const contact: Contact = {
-      id: `contact_${Date.now()}_${Math.random().toString(36).substring(7)}`,
+      id: nanoid(),
       fn: fnValue,
       n: nFieldValue ? parseNField(nFieldValue) : undefined,
+      org: getFirstFieldValue(fields.get("ORG")),
       tel,
       email,
       note: getFirstFieldValue(fields.get("NOTE")),
@@ -207,18 +209,19 @@ function escapeVCardValue(value: string): string {
 }
 
 /**
- * Serialize Contact to vCard 3.0 format with UTF-8 and line folding
+ * Fields managed by this app — these are replaced with current values on export.
+ * All other fields from rawVCard are preserved as-is.
  */
-export function contactToVCard(contact: Contact): string {
+const MANAGED_FIELDS = new Set(["FN", "N", "ORG", "TEL", "EMAIL", "NOTE", "VERSION", "PRODID"]);
+
+/**
+ * Build managed vCard lines from a Contact object
+ */
+function buildManagedLines(contact: Contact): string[] {
   const lines: string[] = [];
 
-  lines.push("BEGIN:VCARD");
-  lines.push("VERSION:3.0");
-  lines.push("PRODID:-//Yeonkku//vCard Editor//EN");
-
   // FN (Formatted Name) - required
-  const fnLine = `FN:${escapeVCardValue(contact.fn)}`;
-  lines.push(...foldLine(fnLine));
+  lines.push(...foldLine(`FN:${escapeVCardValue(contact.fn)}`));
 
   // N (Structured Name)
   if (contact.n) {
@@ -229,38 +232,61 @@ export function contactToVCard(contact: Contact): string {
       contact.n.prefix || "",
       contact.n.suffix || "",
     ];
-    const nLine = `N:${nParts.map(escapeVCardValue).join(";")}`;
-    lines.push(...foldLine(nLine));
+    lines.push(...foldLine(`N:${nParts.map(escapeVCardValue).join(";")}`));
   } else {
-    // Generate N from FN if not present
-    const nLine = `N:${escapeVCardValue(contact.fn)};;;`;
-    lines.push(...foldLine(nLine));
+    lines.push(...foldLine(`N:${escapeVCardValue(contact.fn)};;;`));
+  }
+
+  // ORG (Organization)
+  if (contact.org) {
+    lines.push(...foldLine(`ORG:${escapeVCardValue(contact.org)}`));
   }
 
   // TEL (Telephone)
-  if (contact.tel && contact.tel.length > 0) {
-    for (const tel of contact.tel) {
-      if (tel.trim()) {
-        const telLine = `TEL:${escapeVCardValue(tel)}`;
-        lines.push(...foldLine(telLine));
-      }
-    }
+  for (const tel of contact.tel ?? []) {
+    if (tel.trim()) lines.push(...foldLine(`TEL:${escapeVCardValue(tel)}`));
   }
 
   // EMAIL
-  if (contact.email && contact.email.length > 0) {
-    for (const email of contact.email) {
-      if (email.trim()) {
-        const emailLine = `EMAIL:${escapeVCardValue(email)}`;
-        lines.push(...foldLine(emailLine));
-      }
-    }
+  for (const email of contact.email ?? []) {
+    if (email.trim()) lines.push(...foldLine(`EMAIL:${escapeVCardValue(email)}`));
   }
 
   // NOTE
   if (contact.note) {
-    const noteLine = `NOTE:${escapeVCardValue(contact.note)}`;
-    lines.push(...foldLine(noteLine));
+    lines.push(...foldLine(`NOTE:${escapeVCardValue(contact.note)}`));
+  }
+
+  return lines;
+}
+
+/**
+ * Serialize Contact to vCard 3.0 format.
+ * If rawVCard exists, preserves all original fields (ADR, BDAY, PHOTO, etc.)
+ * and only replaces the fields managed by this app.
+ */
+export function contactToVCard(contact: Contact): string {
+  const lines: string[] = [];
+
+  lines.push("BEGIN:VCARD");
+  lines.push("VERSION:3.0");
+  lines.push("PRODID:-//Yeonkku//vCard Editor//EN");
+
+  // Managed fields (always use current app state)
+  lines.push(...buildManagedLines(contact));
+
+  // Preserved fields from original rawVCard (ADR, BDAY, PHOTO, X-* etc.)
+  if (contact.rawVCard) {
+    for (const line of unfoldLines(contact.rawVCard)) {
+      const trimmed = line.trim();
+      if (!trimmed) continue;
+      const upper = trimmed.toUpperCase();
+      if (upper.startsWith("BEGIN:VCARD") || upper.startsWith("END:VCARD")) continue;
+      const fieldName = upper.split(/[;:]/)[0];
+      if (!MANAGED_FIELDS.has(fieldName)) {
+        lines.push(...foldLine(trimmed));
+      }
+    }
   }
 
   lines.push("END:VCARD");

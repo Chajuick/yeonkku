@@ -29,7 +29,7 @@ export const i18n = {
   contactsSelected: "선택됨",
   contactsSearch: "이름, 전화, 이메일로 검색...",
   contactsTableName: "이름 (FN)",
-  contactsTableGiven: "이름 (주어진 이름)",
+  contactsTableOrg: "회사",
   contactsTablePhone: "전화",
   contactsTableEmail: "이메일",
   contactsTableNote: "메모",
@@ -38,7 +38,7 @@ export const i18n = {
   contactsUpdated: "연락처가 업데이트되었습니다",
   contactsDeleted: "연락처가 삭제되었습니다",
 
-  // Prefix/Suffix
+  // Prefix/Suffix - 이름
   prefixTitle: "Prefix",
   prefixDescription: "이름 앞에 붙을 텍스트/이모지를 추가하세요",
   prefixPlaceholder: "예: Mr., Dr., 🎓",
@@ -51,12 +51,27 @@ export const i18n = {
   prefixSuffixDuplicate: "이미 존재합니다",
   prefixSuffixEmpty2: "입력해주세요",
 
+  // Prefix/Suffix - 회사
+  tabName: "이름",
+  tabOrg: "회사",
+  orgPrefixTitle: "Prefix",
+  orgPrefixDescription: "회사명 앞에 붙을 텍스트/이모지를 추가하세요",
+  orgPrefixPlaceholder: "예: 🏢, (주), ★",
+  orgSuffixTitle: "Suffix",
+  orgSuffixDescription: "회사명 뒤에 붙을 텍스트/이모지를 추가하세요",
+  orgSuffixPlaceholder: "예: Corp., Inc., 팀",
+
   // Batch actions
   batchSelected: "개 연락처 선택됨",
-  batchPrefixes: "Prefixes:",
-  batchSuffixes: "Suffixes:",
+  batchPrefixes: "이름 Prefix:",
+  batchSuffixes: "이름 Suffix:",
+  batchOrgPrefixes: "회사 Prefix:",
+  batchOrgSuffixes: "회사 Suffix:",
   batchApply: "선택된 항목에 적용",
   batchRemove: "선택된 항목에서 제거",
+
+  // ContactsTable filter
+  filterAllCompanies: "전체 회사",
 
   // Settings
   settingsTitle: "설정",
@@ -90,6 +105,14 @@ export const i18n = {
   exportSuccess: "개 연락처를 내보냈습니다",
   exportError: "내보내기 실패",
   exportNoContacts: "내보낼 연락처가 없습니다",
+
+  // Batch preview modal
+  previewTitle: "적용 전 확인",
+  previewApply: "적용",
+  previewCancel: "취소",
+  previewAdd: "추가",
+  previewRemove: "제거",
+  previewNoChange: "변경 없음",
 
   // Confirm modal
   confirmClearAll: "모든 데이터를 삭제하시겠습니까?",

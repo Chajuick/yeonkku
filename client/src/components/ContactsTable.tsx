@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Contact } from "@/../../shared/types";
 import { ChevronDown, ChevronUp, Search, Trash2 } from "lucide-react";
@@ -28,7 +29,9 @@ export default function ContactsTable({
   onContactDelete,
 }: ContactsTableProps) {
   const [searchTerm, setSearchTerm] = useState("");
+  const [companyFilter, setCompanyFilter] = useState<string>("all");
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingField, setEditingField] = useState<"fn" | "org" | null>(null);
   const [editValue, setEditValue] = useState("");
   const editInputRef = useRef<HTMLInputElement>(null);
   const [sortConfig, setSortConfig] = useState<{
@@ -36,14 +39,21 @@ export default function ContactsTable({
     direction: "asc" | "desc";
   }>({ key: "fn", direction: "asc" });
 
-  // Filter contacts based on search term
+  // Unique company list for filter dropdown
+  const uniqueCompanies = Array.from(new Set(
+    contacts.map((c) => c.org).filter((org): org is string => Boolean(org))
+  )).sort();
+
+  // Filter contacts based on search term and company filter
   const filteredContacts = contacts.filter((contact) => {
     const searchLower = searchTerm.toLowerCase();
-    return (
+    const searchMatch =
       contact.fn.toLowerCase().includes(searchLower) ||
+      contact.org?.toLowerCase().includes(searchLower) ||
       contact.tel?.some((t) => t.toLowerCase().includes(searchLower)) ||
-      contact.email?.some((e) => e.toLowerCase().includes(searchLower))
-    );
+      contact.email?.some((e) => e.toLowerCase().includes(searchLower));
+    const companyMatch = companyFilter === "all" || contact.org === companyFilter;
+    return searchMatch && companyMatch;
   });
 
   // Sort contacts
@@ -88,25 +98,30 @@ export default function ContactsTable({
   };
 
   // Handle inline editing
-  const startEdit = (contact: Contact) => {
+  const startEdit = (contact: Contact, field: "fn" | "org") => {
     setEditingId(contact.id);
-    setEditValue(contact.fn);
+    setEditingField(field);
+    setEditValue(field === "fn" ? contact.fn : (contact.org ?? ""));
   };
 
   const saveEdit = (id: string) => {
     const contact = contacts.find((c) => c.id === id);
-    if (contact && editValue.trim()) {
-      onContactUpdate({
-        ...contact,
-        fn: editValue.trim(),
-      });
-      toast.success(i18n.contactsUpdated);
+    if (contact) {
+      if (editingField === "fn" && editValue.trim()) {
+        onContactUpdate({ ...contact, fn: editValue.trim() });
+        toast.success(i18n.contactsUpdated);
+      } else if (editingField === "org") {
+        onContactUpdate({ ...contact, org: editValue.trim() || undefined });
+        toast.success(i18n.contactsUpdated);
+      }
     }
     setEditingId(null);
+    setEditingField(null);
   };
 
   const cancelEdit = () => {
     setEditingId(null);
+    setEditingField(null);
   };
 
   useEffect(() => {
@@ -156,15 +171,32 @@ export default function ContactsTable({
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Search Bar */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder={i18n.contactsSearch}
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
-          />
+        {/* Search + Filter */}
+        <div className="flex gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder={i18n.contactsSearch}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          {uniqueCompanies.length > 0 && (
+            <Select value={companyFilter} onValueChange={setCompanyFilter}>
+              <SelectTrigger className="w-44">
+                <SelectValue placeholder={i18n.filterAllCompanies} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{i18n.filterAllCompanies}</SelectItem>
+                {uniqueCompanies.map((company) => (
+                  <SelectItem key={company} value={company}>
+                    {company}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
         </div>
 
         {/* Table */}
@@ -185,7 +217,7 @@ export default function ContactsTable({
                   <SortHeader label={i18n.contactsTableName} sortKey="fn" />
                 </th>
                 <th className="px-4 py-3 text-left font-medium">
-                  <SortHeader label={i18n.contactsTableGiven} sortKey="n" />
+                  <SortHeader label={i18n.contactsTableOrg} sortKey="org" />
                 </th>
                 <th className="px-4 py-3 text-left font-medium">
                   <SortHeader label={i18n.contactsTablePhone} sortKey="tel" />
@@ -219,7 +251,7 @@ export default function ContactsTable({
                       />
                     </td>
                     <td className="px-4 py-3 font-medium">
-                      {editingId === contact.id ? (
+                      {editingId === contact.id && editingField === "fn" ? (
                         <div className="flex gap-2">
                           <Input
                             ref={editInputRef}
@@ -241,7 +273,7 @@ export default function ContactsTable({
                         </div>
                       ) : (
                         <button
-                          onClick={() => startEdit(contact)}
+                          onClick={() => startEdit(contact, "fn")}
                           className="hover:text-primary hover:underline text-left"
                         >
                           {contact.fn}
@@ -249,7 +281,35 @@ export default function ContactsTable({
                       )}
                     </td>
                     <td className="px-4 py-3 text-sm">
-                      {contact.n?.given || "-"}
+                      {editingId === contact.id && editingField === "org" ? (
+                        <div className="flex gap-2">
+                          <Input
+                            ref={editInputRef}
+                            value={editValue}
+                            onChange={(e) => setEditValue(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") saveEdit(contact.id);
+                              if (e.key === "Escape") cancelEdit();
+                            }}
+                            className="h-8"
+                            placeholder="회사명 입력"
+                          />
+                          <Button
+                            size="sm"
+                            onClick={() => saveEdit(contact.id)}
+                            className="h-8"
+                          >
+                            저장
+                          </Button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => startEdit(contact, "org")}
+                          className="hover:text-primary hover:underline text-left w-full text-left"
+                        >
+                          {contact.org || <span className="text-muted-foreground">-</span>}
+                        </button>
+                      )}
                     </td>
                     <td className="px-4 py-3 text-sm">
                       {contact.tel?.[0] || "-"}

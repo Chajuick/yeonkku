@@ -12,6 +12,7 @@ export interface Contact {
     prefix?: string;
     suffix?: string;
   };
+  org?: string; // Organization (ORG field)
   tel?: string[]; // Telephone numbers
   email?: string[]; // Email addresses
   note?: string;
@@ -37,5 +38,7 @@ export interface AppState {
   contacts: Contact[];
   prefixList: PrefixSuffixItem[];
   suffixList: PrefixSuffixItem[];
+  orgPrefixList: PrefixSuffixItem[];
+  orgSuffixList: PrefixSuffixItem[];
   settings: AppSettings;
 }

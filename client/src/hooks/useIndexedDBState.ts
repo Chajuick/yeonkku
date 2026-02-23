@@ -1,6 +1,8 @@
-import { AppState } from "@/../../shared/types";
+import { AppState, Contact } from "@/../../shared/types";
 import { clearAppState, getDefaultAppState, loadAppState, saveAppState } from "@/lib/storage";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+
+const MAX_UNDO_STEPS = 10;
 
 /**
  * Custom hook for managing app state with IndexedDB persistence
@@ -8,13 +10,15 @@ import { useEffect, useState } from "react";
 export function useIndexedDBState() {
   const [state, setState] = useState<AppState | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const undoStackRef = useRef<Contact[][]>([]);
 
   // Load state on mount
   useEffect(() => {
     const loadState = async () => {
       try {
         const loaded = await loadAppState();
-        setState(loaded || getDefaultAppState());
+        // Merge with defaults to handle missing fields from older stored data
+        setState(loaded ? { ...getDefaultAppState(), ...loaded } : getDefaultAppState());
       } catch (error) {
         console.error("Failed to load state:", error);
         setState(getDefaultAppState());
@@ -46,8 +50,27 @@ export function useIndexedDBState() {
     });
   };
 
+  const saveToUndo = () => {
+    if (!state) return;
+    undoStackRef.current = [
+      ...undoStackRef.current.slice(-MAX_UNDO_STEPS + 1),
+      [...state.contacts],
+    ];
+  };
+
+  const undo = () => {
+    if (undoStackRef.current.length === 0) return;
+    const previous = undoStackRef.current[undoStackRef.current.length - 1];
+    undoStackRef.current = undoStackRef.current.slice(0, -1);
+    setState((prev) => {
+      if (!prev) return prev;
+      return { ...prev, contacts: previous };
+    });
+  };
+
   const resetState = async () => {
     await clearAppState();
+    undoStackRef.current = [];
     setState(getDefaultAppState());
   };
 
@@ -55,6 +78,9 @@ export function useIndexedDBState() {
     state: state || getDefaultAppState(),
     setState,
     updateState,
+    saveToUndo,
+    undo,
+    canUndo: undoStackRef.current.length > 0,
     resetState,
     isLoading,
   };
