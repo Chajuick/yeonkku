@@ -6,6 +6,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { decodeVcfBytes } from "@/lib/encoding";
 import { parseVCardText } from "@/lib/vcardParser";
 import { Contact } from "@/../../shared/types";
 import { Upload, AlertCircle } from "lucide-react";
@@ -26,13 +27,16 @@ export default function VcfImporter({ onImport }: VcfImporterProps) {
   const [isDragging, setIsDragging] = useState(false);
 
   const handleFile = async (file: File) => {
-    if (!file.name.endsWith(".vcf")) {
+    // 안드로이드는 CONTACTS.VCF처럼 대문자로 내보내는 경우가 많다
+    if (!/\.(vcf|vcard)$/i.test(file.name)) {
       toast.error(".vcf 파일을 선택해주세요");
       return;
     }
 
     try {
-      const text = await file.text();
+      // File.text()는 항상 UTF-8로 읽어서 CP949(EUC-KR) 파일이 깨진다.
+      // 바이트로 읽어 인코딩을 판별한 뒤 디코딩한다.
+      const { text } = decodeVcfBytes(await file.arrayBuffer());
       const contacts = parseVCardText(text);
 
       if (contacts.length === 0) {
@@ -114,7 +118,7 @@ export default function VcfImporter({ onImport }: VcfImporterProps) {
           <input
             ref={fileInputRef}
             type="file"
-            accept=".vcf"
+            accept=".vcf,.vcard,text/vcard,text/x-vcard"
             onChange={handleFileSelect}
             className="hidden"
           />

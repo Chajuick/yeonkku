@@ -7,13 +7,13 @@ description: yeonkku 프로젝트 전체 구조와 관련된 작업 시 적용. 
 
 ## 프로젝트 개요
 
-vCard 연락처 관리 앱. 모든 데이터는 클라이언트(IndexedDB)에 저장되며, 서버는 정적 파일 서빙만 담당합니다.
+vCard 연락처 관리 앱. 백엔드가 없고 모든 데이터는 클라이언트(IndexedDB)에만 저장됩니다. Vercel 정적 호스팅으로 배포합니다.
 
 ## 전체 구조
 
 ```
 client/src/       → React SPA (Vite 번들)
-server/           → Express (정적 파일 서버, API 없음)
+vercel.json       → 정적 배포 설정 (SPA 리라이트, 캐시 헤더)
 shared/           → 공유 타입 및 상수
 ```
 
@@ -40,7 +40,7 @@ shared/types (공유)
 | 라우팅     | wouter                                 |
 | 폼         | react-hook-form + zod                  |
 | 상태       | IndexedDB (useIndexedDBState)          |
-| 서버       | Express (정적 파일 전용)               |
+| 배포       | Vercel 정적 호스팅 + PWA               |
 | 테스트     | vitest                                 |
 | 포맷       | Prettier                               |
 
@@ -56,8 +56,9 @@ shared/types (공유)
 
 ```
 pnpm build
-  ├── vite build → dist/public/ (프론트엔드)
-  └── esbuild server/index.ts → dist/index.js (백엔드)
+  └── vite build → dist/ (정적 파일 + sw.js + manifest.webmanifest)
+
+배포: Vercel 정적 호스팅 (vercel.json이 빌드·리라이트·캐시 헤더 지정)
 ```
 
 ## 데이터 흐름

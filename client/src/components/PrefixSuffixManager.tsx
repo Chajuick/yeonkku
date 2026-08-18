@@ -14,6 +14,7 @@ import { Plus, Trash2, ChevronUp, ChevronDown } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { i18n } from "@/lib/i18n";
+import { TAB_TRIGGER_CLASS } from "@/lib/tabStyles";
 
 interface PrefixSuffixManagerProps {
   prefixList: PrefixSuffixItem[];
@@ -265,8 +266,12 @@ export default function PrefixSuffixManager({
   return (
     <Tabs defaultValue="name">
       <TabsList className="mb-4">
-        <TabsTrigger value="name">{i18n.tabName}</TabsTrigger>
-        <TabsTrigger value="org">{i18n.tabOrg}</TabsTrigger>
+        <TabsTrigger value="name" className={TAB_TRIGGER_CLASS}>
+          {i18n.tabName}
+        </TabsTrigger>
+        <TabsTrigger value="org" className={TAB_TRIGGER_CLASS}>
+          {i18n.tabOrg}
+        </TabsTrigger>
       </TabsList>
 
       <TabsContent value="name">

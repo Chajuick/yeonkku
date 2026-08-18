@@ -10,16 +10,32 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import VcfExportGuide from "@/components/VcfExportGuide";
 import VcfImporter from "@/components/VcfImporter";
 import ContactsTable from "@/components/ContactsTable";
 import PrefixSuffixManager from "@/components/PrefixSuffixManager";
-import BatchActionsBar from "@/components/BatchActionsBar";
+import BatchActionsBar, { BatchTargetKind } from "@/components/BatchActionsBar";
 import BatchPreviewModal from "@/components/BatchPreviewModal";
 import ExportButton from "@/components/ExportButton";
 import ConfirmModal from "@/components/ConfirmModal";
+import DuplicateReview from "@/components/DuplicateReview";
+import GroupManager from "@/components/GroupManager";
+import PhoneApplyGuide from "@/components/PhoneApplyGuide";
 import ThemeSelector from "@/components/ThemeSelector";
+import WelcomeGuide from "@/components/WelcomeGuide";
 import { useIndexedDBState } from "@/hooks/useIndexedDBState";
 import { batchApplyPrefixSuffix } from "@/lib/batchApply";
+import {
+  DuplicateGroup,
+  findDuplicateGroups,
+  mergeContacts,
+} from "@/lib/duplicates";
+import {
+  createSamplePrefixes,
+  createSampleSuffixes,
+  SAMPLE_VCF,
+} from "@/lib/sampleData";
+import { parseVCardText } from "@/lib/vcardParser";
 import { Contact, PrefixSuffixItem } from "@/../../shared/types";
 import {
   Settings,
@@ -27,11 +43,18 @@ import {
   BookOpen,
   Tags,
   Download,
+  Lightbulb,
   Palette,
 } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { i18n } from "@/lib/i18n";
+import { TAB_STEP_CLASS, TAB_TRIGGER_CLASS } from "@/lib/tabStyles";
+
+/** 미리보기 확인을 기다리는 일괄 작업 */
+type PendingBatch =
+  | { kind: BatchTargetKind; mode: "add" | "remove"; item: PrefixSuffixItem }
+  | { kind: "group"; groupName: string };
 
 /**
  * Main Home Page Component
@@ -49,10 +72,47 @@ export default function Home() {
   } = useIndexedDBState();
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [includeSimilarNames, setIncludeSimilarNames] = useState(true);
   const [previewOpen, setPreviewOpen] = useState(false);
-  const [pendingAction, setPendingAction] = useState<"add" | "remove" | null>(
-    null
+  const [pendingAction, setPendingAction] = useState<PendingBatch | null>(null);
+
+  // 훅은 아래 isLoading 조기 반환보다 위에 있어야 한다 (렌더마다 호출 수가 같아야 함)
+  const contactsById = useMemo(
+    () => new Map(state.contacts.map(contact => [contact.id, contact])),
+    [state.contacts]
   );
+
+  // 연락처가 바뀔 때만 다시 계산한다 (수천 건에서 매 렌더 돌면 버벅인다)
+  // 사용자가 등록한 prefix/suffix는 이름이 아니라 장식이므로 비교 전에 떼어낸다
+  const decorations = useMemo(
+    () =>
+      [
+        ...state.prefixList,
+        ...state.suffixList,
+        ...state.orgPrefixList,
+        ...state.orgSuffixList,
+      ].map(item => item.text),
+    [
+      state.prefixList,
+      state.suffixList,
+      state.orgPrefixList,
+      state.orgSuffixList,
+    ]
+  );
+
+  const duplicateGroups = useMemo(() => {
+    const ignored = new Set(state.ignoredDuplicateKeys ?? []);
+    return findDuplicateGroups(state.contacts, {
+      includeSimilarNames,
+      decorations,
+    }).filter(group => !ignored.has(group.key));
+  }, [
+    state.contacts,
+    state.ignoredDuplicateKeys,
+    includeSimilarNames,
+    decorations,
+  ]);
 
   if (isLoading) {
     return (
@@ -68,6 +128,23 @@ export default function Home() {
       contacts: [...state.contacts, ...contacts],
     });
     setSelectedIds(new Set());
+  };
+
+  // 파일이 없는 첫 방문자가 기능을 바로 체험할 수 있게 샘플을 채운다.
+  // prefix/suffix는 사용자가 이미 만든 게 있으면 건드리지 않는다.
+  const handleLoadSample = () => {
+    const contacts = parseVCardText(SAMPLE_VCF);
+    updateState({
+      contacts,
+      prefixList:
+        state.prefixList.length > 0 ? state.prefixList : createSamplePrefixes(),
+      suffixList:
+        state.suffixList.length > 0 ? state.suffixList : createSampleSuffixes(),
+    });
+    setSelectedIds(new Set());
+    toast.success(i18n.welcomeSampleLoaded, {
+      description: i18n.welcomeSampleLoadedDesc,
+    });
   };
 
   // Handle contact update
@@ -109,27 +186,73 @@ export default function Home() {
     updateState({ orgSuffixList: suffixes });
   };
 
-  // Open preview modal before batch apply
-  const handleBatchApply = (action: "add" | "remove") => {
-    setPendingAction(action);
+  // 고른 항목 하나만 담은 목록을 만들어 batchApply에 넘긴다.
+  // (예전처럼 "켜 둔 항목 전부"가 아니라, 방금 고른 것만 적용된다)
+  const listsForPending = (
+    pending: Extract<PendingBatch, { mode: "add" | "remove" }>
+  ) => {
+    const only = (kind: BatchTargetKind) =>
+      pending.kind === kind ? [{ ...pending.item, enabled: true }] : [];
+
+    return {
+      prefixList: only("prefix"),
+      suffixList: only("suffix"),
+      orgPrefixList: only("orgPrefix"),
+      orgSuffixList: only("orgSuffix"),
+    };
+  };
+
+  // 선택한 연락처의 그룹(ORG)을 통째로 바꾼다
+  const applyGroup = (contacts: Contact[], groupName: string): Contact[] =>
+    contacts.map(contact =>
+      selectedIds.has(contact.id)
+        ? { ...contact, org: groupName || undefined, orgRest: undefined }
+        : contact
+    );
+
+  const runPending = (
+    pending: PendingBatch,
+    contacts: Contact[]
+  ): Contact[] => {
+    if (pending.kind === "group") {
+      return applyGroup(contacts, pending.groupName);
+    }
+
+    const lists = listsForPending(pending);
+    return batchApplyPrefixSuffix(
+      contacts,
+      selectedIds,
+      lists.prefixList,
+      lists.suffixList,
+      lists.orgPrefixList,
+      lists.orgSuffixList,
+      pending.mode,
+      state.settings
+    );
+  };
+
+  // 붙이기/떼어내기 — 항목 하나를 고르면 미리보기를 먼저 띄운다
+  const handleApplyItem = (
+    kind: BatchTargetKind,
+    mode: "add" | "remove",
+    item: PrefixSuffixItem
+  ) => {
+    setPendingAction({ kind, mode, item });
+    setPreviewOpen(true);
+  };
+
+  // 그룹 지정 — 빈 문자열이면 그룹 비우기.
+  // 그룹 목록에 남기는 건 미리보기에서 확정한 뒤에 한다 (취소하면 아무것도 안 남게)
+  const handleAssignGroup = (groupName: string) => {
+    setPendingAction({ kind: "group", groupName });
     setPreviewOpen(true);
   };
 
   // Compute preview items for the modal
+  const selectedContacts = state.contacts.filter(c => selectedIds.has(c.id));
   const previewItems = pendingAction
-    ? batchApplyPrefixSuffix(
-        state.contacts.filter(c => selectedIds.has(c.id)),
-        new Set(
-          state.contacts.filter(c => selectedIds.has(c.id)).map(c => c.id)
-        ),
-        state.prefixList,
-        state.suffixList,
-        state.orgPrefixList,
-        state.orgSuffixList,
-        pendingAction,
-        state.settings
-      ).map((updated, i) => {
-        const original = state.contacts.filter(c => selectedIds.has(c.id))[i];
+    ? runPending(pendingAction, selectedContacts).map((updated, i) => {
+        const original = selectedContacts[i];
         return {
           id: updated.id,
           before: original.fn,
@@ -146,27 +269,36 @@ export default function Home() {
     setPreviewOpen(false);
     saveToUndo();
 
-    const updated = batchApplyPrefixSuffix(
-      state.contacts,
-      selectedIds,
-      state.prefixList,
-      state.suffixList,
-      state.orgPrefixList,
-      state.orgSuffixList,
-      pendingAction,
-      state.settings
-    );
+    // 하단 바에서 즉석으로 만든 그룹도 목록에 남겨 다음에 다시 고를 수 있게 한다
+    const isNewGroup =
+      pendingAction.kind === "group" &&
+      pendingAction.groupName &&
+      !(state.groupList ?? []).includes(pendingAction.groupName);
 
-    updateState({ contacts: updated });
-    toast.success(
-      `${selectedIds.size}개 연락처에 ${pendingAction === "add" ? "적용" : "제거"}되었습니다`,
-      {
-        action: {
-          label: "되돌리기",
-          onClick: undo,
-        },
-      }
-    );
+    updateState({
+      contacts: runPending(pendingAction, state.contacts),
+      ...(isNewGroup && pendingAction.kind === "group"
+        ? { groupList: [...(state.groupList ?? []), pendingAction.groupName] }
+        : {}),
+    });
+
+    const message =
+      pendingAction.kind === "group"
+        ? `${selectedIds.size}${
+            pendingAction.groupName
+              ? i18n.batchGroupAssigned
+              : i18n.batchGroupCleared
+          }`
+        : `${selectedIds.size}개 연락처에 ${
+            pendingAction.mode === "add" ? "붙였습니다" : "떼어냈습니다"
+          }`;
+
+    toast.success(message, {
+      action: {
+        label: "되돌리기",
+        onClick: undo,
+      },
+    });
     setPendingAction(null);
   };
 
@@ -180,6 +312,68 @@ export default function Home() {
     });
   };
 
+  // 대표 연락처에 나머지를 합치고, 합쳐진 연락처는 목록에서 뺀다.
+  const handleMergeDuplicates = (group: DuplicateGroup, primaryId: string) => {
+    const members = group.contactIds
+      .map(id => contactsById.get(id))
+      .filter((c): c is Contact => Boolean(c));
+    const primary = members.find(c => c.id === primaryId);
+    if (!primary || members.length < 2) return;
+
+    saveToUndo();
+
+    const others = members.filter(c => c.id !== primaryId);
+    const merged = mergeContacts(primary, others);
+    const removedIds = new Set(others.map(c => c.id));
+
+    updateState({
+      contacts: state.contacts
+        .filter(c => !removedIds.has(c.id))
+        .map(c => (c.id === primary.id ? merged : c)),
+    });
+    setSelectedIds(new Set());
+
+    toast.success(`${members.length}${i18n.dupMerged}`, {
+      action: {
+        label: "되돌리기",
+        onClick: undo,
+      },
+    });
+  };
+
+  // "중복 아님"으로 넘긴 그룹은 다시 올라오지 않게 기억해 둔다.
+  // 잘못 눌렀을 때 되살릴 방법이 없으면 곤란하므로 토스트에 되돌리기를 붙인다.
+  const handleIgnoreDuplicates = (group: DuplicateGroup) => {
+    const previous = state.ignoredDuplicateKeys ?? [];
+    updateState({ ignoredDuplicateKeys: [...previous, group.key] });
+
+    toast.success(i18n.dupIgnored, {
+      action: {
+        label: "되돌리기",
+        onClick: () => updateState({ ignoredDuplicateKeys: previous }),
+      },
+    });
+  };
+
+  // 체크한 연락처 일괄 삭제. 되돌리기 스택에 먼저 담아 실수를 되살릴 수 있게 한다.
+  const handleDeleteSelected = () => {
+    saveToUndo();
+
+    const deletedCount = selectedIds.size;
+    updateState({
+      contacts: state.contacts.filter(c => !selectedIds.has(c.id)),
+    });
+    setSelectedIds(new Set());
+    setDeleteConfirmOpen(false);
+
+    toast.success(`${deletedCount}${i18n.toastDeletedSelected}`, {
+      action: {
+        label: "되돌리기",
+        onClick: undo,
+      },
+    });
+  };
+
   // Handle reset
   const handleReset = async () => {
     await resetState();
@@ -188,40 +382,30 @@ export default function Home() {
     toast.success("모든 데이터가 삭제되었습니다");
   };
 
-  // Toggle prefix enabled
-  const togglePrefixEnabled = (id: string) => {
-    handlePrefixChange(
-      state.prefixList.map(p =>
-        p.id === id ? { ...p, enabled: !p.enabled } : p
-      )
-    );
+  const hasContacts = state.contacts.length > 0;
+
+  // 그룹별 연락처 수
+  const countByGroup = new Map<string, number>();
+  for (const contact of state.contacts) {
+    const group = contact.org?.trim();
+    if (group) countByGroup.set(group, (countByGroup.get(group) ?? 0) + 1);
+  }
+
+  // 미리 만들어 둔 그룹 + 연락처에서 실제로 쓰이는 그룹
+  const existingGroups = [
+    ...new Set([...(state.groupList ?? []), ...countByGroup.keys()]),
+  ].sort((a, b) => a.localeCompare(b, "ko"));
+
+  const handleAddGroup = (name: string) => {
+    updateState({ groupList: [...(state.groupList ?? []), name] });
+    toast.success(`"${name}" ${i18n.groupAdded}`);
   };
 
-  // Toggle suffix enabled
-  const toggleSuffixEnabled = (id: string) => {
-    handleSuffixChange(
-      state.suffixList.map(s =>
-        s.id === id ? { ...s, enabled: !s.enabled } : s
-      )
-    );
-  };
-
-  // Toggle org prefix enabled
-  const toggleOrgPrefixEnabled = (id: string) => {
-    handleOrgPrefixChange(
-      state.orgPrefixList.map(p =>
-        p.id === id ? { ...p, enabled: !p.enabled } : p
-      )
-    );
-  };
-
-  // Toggle org suffix enabled
-  const toggleOrgSuffixEnabled = (id: string) => {
-    handleOrgSuffixChange(
-      state.orgSuffixList.map(s =>
-        s.id === id ? { ...s, enabled: !s.enabled } : s
-      )
-    );
+  // 목록에서만 빼고, 연락처에 지정된 그룹은 건드리지 않는다
+  const handleRemoveGroup = (name: string) => {
+    updateState({
+      groupList: (state.groupList ?? []).filter(group => group !== name),
+    });
   };
 
   return (
@@ -249,43 +433,73 @@ export default function Home() {
 
         {/* Main Tabs */}
         <Tabs defaultValue="contacts" className="space-y-6">
+          {/* 탭에 번호를 붙여 가져오기 → 꾸미기 → 내보내기 순서를 드러낸다.
+              연락처가 없으면 2·3단계는 눌러도 빈 화면이라 잠가 둔다. */}
           <TabsList className="grid w-full grid-cols-4 rounded-2xl p-1">
-            <TabsTrigger
-              value="contacts"
-              className="flex items-center gap-1.5 rounded-xl"
-            >
+            <TabsTrigger value="contacts" className={TAB_TRIGGER_CLASS}>
+              <span className={TAB_STEP_CLASS}>1</span>
               <BookOpen className="w-4 h-4" />
               <span className="hidden sm:inline">{i18n.tabContacts}</span>
             </TabsTrigger>
             <TabsTrigger
               value="prefixsuffix"
-              className="flex items-center gap-1.5 rounded-xl"
+              disabled={!hasContacts}
+              title={hasContacts ? undefined : i18n.tabLockedHint}
+              className={TAB_TRIGGER_CLASS}
             >
+              <span className={TAB_STEP_CLASS}>2</span>
               <Tags className="w-4 h-4" />
               <span className="hidden sm:inline">{i18n.tabPrefixSuffix}</span>
             </TabsTrigger>
             <TabsTrigger
-              value="settings"
-              className="flex items-center gap-1.5 rounded-xl"
-            >
-              <Settings className="w-4 h-4" />
-              <span className="hidden sm:inline">{i18n.tabSettings}</span>
-            </TabsTrigger>
-            <TabsTrigger
               value="export"
-              className="flex items-center gap-1.5 rounded-xl"
+              disabled={!hasContacts}
+              title={hasContacts ? undefined : i18n.tabLockedHint}
+              className={TAB_TRIGGER_CLASS}
             >
+              <span className={TAB_STEP_CLASS}>3</span>
               <Download className="w-4 h-4" />
               <span className="hidden sm:inline">{i18n.tabExport}</span>
+            </TabsTrigger>
+            <TabsTrigger value="settings" className={TAB_TRIGGER_CLASS}>
+              <Settings className="w-4 h-4" />
+              <span className="hidden sm:inline">{i18n.tabSettings}</span>
             </TabsTrigger>
           </TabsList>
 
           {/* Contacts Tab */}
           <TabsContent value="contacts" className="space-y-6">
-            {state.contacts.length === 0 ? (
-              <VcfImporter onImport={handleImport} />
+            {!hasContacts ? (
+              <>
+                <WelcomeGuide onLoadSample={handleLoadSample} />
+                <VcfExportGuide />
+                <VcfImporter onImport={handleImport} />
+              </>
             ) : (
               <>
+                {/* 선택이 없으면 하단 액션바가 숨겨져 다음 행동이 안 보인다.
+                    체크하는 순간 사라지는 안내를 대신 띄운다. */}
+                {selectedIds.size === 0 && (
+                  <div className="flex gap-3 rounded-2xl border border-dashed bg-muted/40 p-4">
+                    <Lightbulb className="mt-0.5 h-5 w-5 shrink-0 text-amber-500" />
+                    <div>
+                      <p className="font-medium">{i18n.nextStepTitle}</p>
+                      <p className="font-body text-sm leading-relaxed text-muted-foreground">
+                        {i18n.nextStepDesc}
+                      </p>
+                    </div>
+                  </div>
+                )}
+                {duplicateGroups.length > 0 && (
+                  <DuplicateReview
+                    groups={duplicateGroups}
+                    contactsById={contactsById}
+                    includeSimilarNames={includeSimilarNames}
+                    onIncludeSimilarNamesChange={setIncludeSimilarNames}
+                    onMerge={handleMergeDuplicates}
+                    onIgnore={handleIgnoreDuplicates}
+                  />
+                )}
                 <ContactsTable
                   contacts={state.contacts}
                   selectedIds={selectedIds}
@@ -299,18 +513,17 @@ export default function Home() {
                   suffixList={state.suffixList}
                   orgPrefixList={state.orgPrefixList}
                   orgSuffixList={state.orgSuffixList}
-                  onApplyAdd={() => handleBatchApply("add")}
-                  onApplyRemove={() => handleBatchApply("remove")}
-                  onPrefixToggle={togglePrefixEnabled}
-                  onSuffixToggle={toggleSuffixEnabled}
-                  onOrgPrefixToggle={toggleOrgPrefixEnabled}
-                  onOrgSuffixToggle={toggleOrgSuffixEnabled}
+                  existingGroups={existingGroups}
+                  onApplyItem={handleApplyItem}
+                  onAssignGroup={handleAssignGroup}
+                  onClearSelection={() => setSelectedIds(new Set())}
+                  onDeleteSelected={() => setDeleteConfirmOpen(true)}
                 />
               </>
             )}
 
             {/* Import More */}
-            {state.contacts.length > 0 && (
+            {hasContacts && (
               <Card>
                 <CardHeader>
                   <CardTitle className="text-lg">{i18n.importMore}</CardTitle>
@@ -324,6 +537,13 @@ export default function Home() {
 
           {/* Prefix/Suffix Tab */}
           <TabsContent value="prefixsuffix" className="space-y-6">
+            <GroupManager
+              groups={existingGroups}
+              countByGroup={countByGroup}
+              removableGroups={state.groupList ?? []}
+              onAdd={handleAddGroup}
+              onRemove={handleRemoveGroup}
+            />
             <PrefixSuffixManager
               prefixList={state.prefixList}
               suffixList={state.suffixList}
@@ -422,27 +642,6 @@ export default function Home() {
                   <p className="text-xs text-muted-foreground">
                     {i18n.settingsPreventDuplicatesDesc}
                   </p>
-
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="apply-n-field">
-                      {i18n.settingsApplyToNField}
-                    </Label>
-                    <Switch
-                      id="apply-n-field"
-                      checked={state.settings.applyToNField}
-                      onCheckedChange={checked => {
-                        updateState({
-                          settings: {
-                            ...state.settings,
-                            applyToNField: checked,
-                          },
-                        });
-                      }}
-                    />
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    {i18n.settingsApplyToNFieldDesc}
-                  </p>
                 </div>
 
                 {/* Danger Zone */}
@@ -482,6 +681,7 @@ export default function Home() {
                 <ExportButton contacts={state.contacts} />
               </CardContent>
             </Card>
+            <PhoneApplyGuide />
           </TabsContent>
         </Tabs>
       </div>
@@ -489,7 +689,13 @@ export default function Home() {
       {/* Batch Preview Modal */}
       <BatchPreviewModal
         open={previewOpen}
-        action={pendingAction ?? "add"}
+        action={
+          pendingAction === null
+            ? "add"
+            : pendingAction.kind === "group"
+              ? "group"
+              : pendingAction.mode
+        }
         preview={previewItems}
         totalSelected={selectedIds.size}
         onConfirm={handleConfirmApply}
@@ -497,6 +703,18 @@ export default function Home() {
           setPreviewOpen(false);
           setPendingAction(null);
         }}
+      />
+
+      {/* 선택 삭제 확인 */}
+      <ConfirmModal
+        open={deleteConfirmOpen}
+        title={i18n.confirmDeleteSelected}
+        description={`${selectedIds.size}${i18n.confirmDeleteSelectedDesc}`}
+        confirmText={i18n.confirmDeleteButton}
+        cancelText={i18n.confirmCancel}
+        isDangerous
+        onConfirm={handleDeleteSelected}
+        onCancel={() => setDeleteConfirmOpen(false)}
       />
 
       {/* Confirm Modal */}

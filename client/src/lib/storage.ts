@@ -5,6 +5,24 @@ const DB_VERSION = 1;
 const STORE_NAME = "app_state";
 
 /**
+ * 브라우저에 "이 사이트 저장소는 지우지 말아 달라"고 요청한다.
+ *
+ * 요청하지 않으면 IndexedDB는 best-effort 등급이라 저장 공간이 부족할 때
+ * 브라우저가 임의로 지울 수 있고, iOS Safari는 홈 화면에 설치되지 않은
+ * 사이트를 7일간 미사용 시 통째로 삭제한다.
+ */
+export async function requestPersistentStorage(): Promise<boolean> {
+  if (!navigator.storage?.persist) return false;
+
+  try {
+    if (await navigator.storage.persisted()) return true;
+    return await navigator.storage.persist();
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Initialize IndexedDB
  */
 function initDB(): Promise<IDBDatabase> {
@@ -108,11 +126,12 @@ export function getDefaultAppState(): AppState {
     suffixList: [],
     orgPrefixList: [],
     orgSuffixList: [],
+    groupList: [],
+    ignoredDuplicateKeys: [],
     settings: {
       preventDuplicates: true,
       prefixSeparator: " ",
       suffixSeparator: " ",
-      applyToNField: true,
     },
   };
 }

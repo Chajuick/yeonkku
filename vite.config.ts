@@ -5,6 +5,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { defineConfig, type Plugin, type ViteDevServer } from "vite";
 import { vitePluginManusRuntime } from "vite-plugin-manus-runtime";
+import { VitePWA } from "vite-plugin-pwa";
 
 // =============================================================================
 // Manus Debug Collector - Vite Plugin
@@ -150,16 +151,74 @@ function vitePluginManusDebugCollector(): Plugin {
   };
 }
 
-const plugins = [
-  react(),
-  tailwindcss(),
+const pwaPlugin = VitePWA({
+  // 'prompt': 새 버전이 배포돼도 편집 중인 화면을 마음대로 새로고침하지 않고,
+  // 사용자가 토스트에서 직접 업데이트를 누를 때만 교체한다.
+  registerType: "prompt",
+  injectRegister: null, // 등록은 client/src/pwa.ts에서 직접 처리
+  includeAssets: ["favicon.svg", "favicon-32.png", "apple-touch-icon.png"],
+  manifest: {
+    id: "/",
+    name: "연꾸 - 연락처 꾸미기",
+    short_name: "연꾸",
+    description:
+      "VCF 연락처를 가져와 접두사·접미사를 일괄 편집하고 다시 내보내는 도구. 모든 데이터는 기기 안에만 저장됩니다.",
+    lang: "ko",
+    dir: "ltr",
+    start_url: "/",
+    scope: "/",
+    display: "standalone",
+    background_color: "#f0faf4",
+    theme_color: "#5f9e7a",
+    categories: ["productivity", "utilities"],
+    icons: [
+      {
+        src: "/icon-192.png",
+        sizes: "192x192",
+        type: "image/png",
+        purpose: "any",
+      },
+      {
+        src: "/icon-512.png",
+        sizes: "512x512",
+        type: "image/png",
+        purpose: "any",
+      },
+      {
+        src: "/icon-maskable-192.png",
+        sizes: "192x192",
+        type: "image/png",
+        purpose: "maskable",
+      },
+      {
+        src: "/icon-maskable-512.png",
+        sizes: "512x512",
+        type: "image/png",
+        purpose: "maskable",
+      },
+    ],
+  },
+  workbox: {
+    globPatterns: ["**/*.{js,css,html,svg,png,ico,webmanifest,woff2}"],
+    navigateFallback: "/index.html",
+    cleanupOutdatedCaches: true,
+  },
+});
+
+const corePlugins = [react(), tailwindcss(), pwaPlugin];
+
+// 스캐폴딩에 딸려온 Manus 개발 도구들.
+// 프로덕션 빌드에 포함되면 index.html에 360KB짜리 인라인 스크립트가 박히므로
+// dev 서버에서만 적용한다.
+const devOnlyPlugins = [
   jsxLocPlugin(),
   vitePluginManusRuntime(),
   vitePluginManusDebugCollector(),
 ];
 
-export default defineConfig({
-  plugins,
+export default defineConfig(({ command }) => ({
+  plugins:
+    command === "serve" ? [...corePlugins, ...devOnlyPlugins] : corePlugins,
   resolve: {
     alias: {
       "@": path.resolve(import.meta.dirname, "client", "src"),
@@ -170,7 +229,7 @@ export default defineConfig({
   envDir: path.resolve(import.meta.dirname),
   root: path.resolve(import.meta.dirname, "client"),
   build: {
-    outDir: path.resolve(import.meta.dirname, "dist/public"),
+    outDir: path.resolve(import.meta.dirname, "dist"),
     emptyOutDir: true,
   },
   server: {
@@ -191,4 +250,4 @@ export default defineConfig({
       deny: ["**/.*"],
     },
   },
-});
+}));

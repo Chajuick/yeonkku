@@ -315,7 +315,7 @@ export default function ContactsTable({
                               if (e.key === "Escape") cancelEdit();
                             }}
                             className="h-8"
-                            placeholder="회사명 입력"
+                            placeholder="그룹명 입력"
                           />
                           <Button
                             size="sm"

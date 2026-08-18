@@ -20,7 +20,7 @@ interface PreviewItem {
 
 interface BatchPreviewModalProps {
   open: boolean;
-  action: "add" | "remove";
+  action: "add" | "remove" | "group";
   preview: PreviewItem[];
   totalSelected: number;
   onConfirm: () => void;
@@ -83,7 +83,7 @@ export default function BatchPreviewModal({
                       <div className="truncate">{item.before}</div>
                       {orgChanged && (
                         <div className="truncate text-muted-foreground mt-1">
-                          <span className="text-xs mr-1">회사</span>
+                          <span className="text-xs mr-1">그룹</span>
                           {item.orgBefore || "—"}
                         </div>
                       )}
@@ -104,7 +104,7 @@ export default function BatchPreviewModal({
                       {orgChanged && (
                         <div className="truncate mt-1 font-medium text-primary">
                           <span className="text-xs mr-1 font-normal text-muted-foreground">
-                            회사
+                            그룹
                           </span>
                           {item.orgAfter || "—"}
                         </div>
@@ -127,8 +127,12 @@ export default function BatchPreviewModal({
             {i18n.previewCancel}
           </Button>
           <Button onClick={onConfirm} disabled={changed.length === 0}>
-            {action === "add" ? i18n.previewAdd : i18n.previewRemove} (
-            {changed.length}개)
+            {action === "group"
+              ? i18n.previewAssignGroup
+              : action === "add"
+                ? i18n.previewAdd
+                : i18n.previewRemove}{" "}
+            ({changed.length}개)
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -8,7 +8,6 @@ interface ApplyOptions {
   preventDuplicates: boolean;
   prefixSeparator: string;
   suffixSeparator: string;
-  applyToNField: boolean;
 }
 
 /**
@@ -42,23 +41,10 @@ export function applyPrefixesToContact(
     newFn = prefix + options.prefixSeparator + newFn;
   }
 
-  // Apply to N field if enabled
-  let newN = contact.n;
-  if (options.applyToNField && contact.n) {
-    let newPrefix = contact.n.prefix || "";
-    for (const prefix of enabledPrefixes) {
-      if (options.preventDuplicates && alreadyContains(newPrefix, prefix)) {
-        continue;
-      }
-      newPrefix = prefix + options.prefixSeparator + newPrefix;
-    }
-    newN = { ...contact.n, prefix: newPrefix };
-  }
-
   return {
     ...contact,
     fn: newFn,
-    n: newN,
+    n: contact.n,
   };
 }
 
@@ -86,23 +72,10 @@ export function applySuffixesToContact(
     newFn = newFn + options.suffixSeparator + suffix;
   }
 
-  // Apply to N field if enabled
-  let newN = contact.n;
-  if (options.applyToNField && contact.n) {
-    let newSuffix = contact.n.suffix || "";
-    for (const suffix of enabledSuffixes) {
-      if (options.preventDuplicates && alreadyContains(newSuffix, suffix)) {
-        continue;
-      }
-      newSuffix = newSuffix + options.suffixSeparator + suffix;
-    }
-    newN = { ...contact.n, suffix: newSuffix };
-  }
-
   return {
     ...contact,
     fn: newFn,
-    n: newN,
+    n: contact.n,
   };
 }
 
@@ -129,23 +102,10 @@ export function removePrefixesFromContact(
     newFn = newFn.replace(pattern, "");
   }
 
-  // Remove from N field if enabled
-  let newN = contact.n;
-  if (options.applyToNField && contact.n?.prefix) {
-    let newPrefix = contact.n.prefix;
-    for (const prefix of enabledPrefixes) {
-      const pattern = new RegExp(
-        `^${escapeRegex(prefix)}(?:${prefixSep}|\\s*)`
-      );
-      newPrefix = newPrefix.replace(pattern, "");
-    }
-    newN = { ...contact.n, prefix: newPrefix };
-  }
-
   return {
     ...contact,
     fn: newFn,
-    n: newN,
+    n: contact.n,
   };
 }
 
@@ -172,23 +132,10 @@ export function removeSuffixesFromContact(
     newFn = newFn.replace(pattern, "");
   }
 
-  // Remove from N field if enabled
-  let newN = contact.n;
-  if (options.applyToNField && contact.n?.suffix) {
-    let newSuffix = contact.n.suffix;
-    for (const suffix of enabledSuffixes) {
-      const pattern = new RegExp(
-        `(?:${suffixSep}|\\s*)${escapeRegex(suffix)}$`
-      );
-      newSuffix = newSuffix.replace(pattern, "");
-    }
-    newN = { ...contact.n, suffix: newSuffix };
-  }
-
   return {
     ...contact,
     fn: newFn,
-    n: newN,
+    n: contact.n,
   };
 }
 

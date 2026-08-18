@@ -107,3 +107,9 @@ temp/
 
 # Webdev artifacts (checkpoint zips, migrations, etc.)
 .webdev/
+
+# Playwright MCP scratch output
+.playwright-mcp/
+
+# 루트에 생기는 스크린샷 등 임시 산출물
+/*.png

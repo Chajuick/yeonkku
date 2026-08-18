@@ -20,8 +20,8 @@ pnpm remove <pkg>  # 패키지 제거
 pnpm dev      # 개발 서버 시작 (포트 3000)
 pnpm check    # 타입체크 (커밋 전 필수)
 pnpm format   # Prettier 포맷
-pnpm build    # 프론트엔드 + 백엔드 빌드
-pnpm start    # 프로덕션 서버 실행
+pnpm build    # 프로덕션 빌드 (dist/)
+pnpm preview  # 빌드 결과물 로컬 확인 (PWA 동작 확인용)
 ```
 
 **커밋 전 순서:**
@@ -43,12 +43,11 @@ yeonggu/
 │   ├── lib/             # 유틸리티 (vcardParser, storage, i18n, utils)
 │   ├── App.tsx          # 라우팅 포함 루트 컴포넌트
 │   └── main.tsx         # 진입점
-├── server/
-│   └── index.ts         # Express 서버 (정적 파일 서빙 전용)
 ├── shared/
 │   ├── types.ts         # 공유 타입 (Contact, AppState 등)
 │   └── const.ts         # 공유 상수
-└── vite.config.ts       # Vite 설정 및 경로 별칭
+├── vite.config.ts       # Vite 설정, 경로 별칭, PWA(vite-plugin-pwa)
+└── vercel.json          # Vercel 정적 배포 설정 (SPA 리라이트/캐시 헤더)
 ```
 
 ## 경로 별칭
@@ -86,7 +85,17 @@ yeonggu/
 
 - `wouter`로 클라이언트 사이드 라우팅
 - `App.tsx`에서 라우트 정의
-- Express가 모든 경로를 캐치하여 `index.html` 반환 (SPA)
+- `vercel.json`의 rewrite가 모든 경로를 `index.html`로 넘김 (SPA)
+
+## 배포 / PWA
+
+- **백엔드 없음.** Vercel 정적 호스팅. 빌드 산출물은 `dist/`
+- `vite-plugin-pwa`로 서비스워커·매니페스트 생성 (`registerType: "prompt"`)
+  - 새 버전은 자동 새로고침하지 않고 토스트로 물어본다 (편집 중 데이터 보호)
+  - 등록 코드: `client/src/pwa.ts`, 아이콘: `client/public/icon-*.png`
+- Manus 스캐폴딩 플러그인(jsxLoc, manus-runtime, debug-collector)은 **dev 전용**.
+  프로덕션 빌드에 넣으면 index.html에 수백 KB 인라인 스크립트가 박힌다
+- `navigator.storage.persist()`를 첫 저장 시 호출 (IndexedDB 자동 삭제 방지)
 
 ## 주요 파일
 

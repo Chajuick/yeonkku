@@ -1,26 +1,43 @@
 <!doctype html>
-<html lang="en">
+<html lang="ko">
   <head>
     <meta charset="UTF-8" />
     <meta
       name="viewport"
-      content="width=device-width, initial-scale=1.0, maximum-scale=1"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1, viewport-fit=cover"
     />
     <title>연꾸 - 연락처 꾸미기</title>
-    <!-- THIS IS THE START OF A COMMENT BLOCK, BLOCK TO BE DELETED: Google Fonts here, example:
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-    THIS IS THE END OF A COMMENT BLOCK, BLOCK TO BE DELETED -->
+    <meta
+      name="description"
+      content="VCF 연락처를 가져와 접두사·접미사를 일괄 편집하고 다시 내보내는 도구. 모든 데이터는 기기 안에만 저장됩니다."
+    />
+
+    <!-- PWA -->
+    <meta
+      name="theme-color"
+      media="(prefers-color-scheme: light)"
+      content="#f0faf4"
+    />
+    <meta
+      name="theme-color"
+      media="(prefers-color-scheme: dark)"
+      content="#1a2e25"
+    />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="연꾸" />
+    <meta
+      name="apple-mobile-web-app-status-bar-style"
+      content="black-translucent"
+    />
+
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
   </head>
 
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
-    <script
-      defer
-      src="%VITE_ANALYTICS_ENDPOINT%/umami"
-      data-website-id="%VITE_ANALYTICS_WEBSITE_ID%"
-    ></script>
   </body>
 </html>

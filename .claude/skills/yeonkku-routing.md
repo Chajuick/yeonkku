@@ -64,18 +64,16 @@ navigate("/settings");
 const [location] = useLocation();
 ```
 
-## SPA 서버 설정
+## SPA 라우팅 설정
 
-Express 서버가 모든 경로를 `index.html`로 리다이렉트 (SPA 방식):
+백엔드는 없다. Vercel이 모든 경로를 `index.html`로 넘긴다:
 
-```typescript
-// server/index.ts
-app.get("*", (_req, res) => {
-  res.sendFile(path.join(staticPath, "index.html"));
-});
+```json
+// vercel.json
+"rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
 ```
 
-새 페이지 추가 시 서버 설정 변경 불필요.
+새 페이지 추가 시 배포 설정 변경 불필요.
 
 ## 앱 레이아웃 구조
 

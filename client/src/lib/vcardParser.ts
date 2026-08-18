@@ -23,23 +23,84 @@ interface ParsedVCard {
 }
 
 /**
- * Unfold vCard lines (handle line continuations)
- * Lines starting with space/tab are continuations of previous line
+ * vCard 논리 줄 복원.
+ *
+ * 두 가지 줄바꿈 규칙을 함께 처리한다.
+ * 1. RFC 2425 folding: 다음 줄이 공백/탭으로 시작하면 앞 줄의 연속
+ * 2. vCard 2.1 Quoted-Printable soft line break: 줄 끝 "="가 다음 줄로 이어짐
+ *
+ * 2번을 처리하지 않으면 한글 이름이 중간에서 잘리고 끝에 "="가 남는다.
+ * (한국 휴대폰이 내보내는 vCard 2.1에서 가장 흔한 깨짐 원인)
  */
 function unfoldLines(text: string): string[] {
   const lines = text.split(/\r?\n/);
   const unfolded: string[] = [];
+  let currentIsQuotedPrintable = false;
 
   for (const line of lines) {
+    const lastIndex = unfolded.length - 1;
+
     if (line.match(/^[ \t]/) && unfolded.length > 0) {
       // Continuation line - append to previous
-      unfolded[unfolded.length - 1] += line.substring(1);
-    } else if (line.trim()) {
+      unfolded[lastIndex] += line.substring(1);
+      continue;
+    }
+
+    // QP 소프트 줄바꿈: 앞 줄 끝의 "="를 떼고 다음 줄을 그대로 이어 붙인다.
+    // BASE64 사진 값도 "="로 끝날 수 있어 QP 필드일 때만 적용한다.
+    if (
+      currentIsQuotedPrintable &&
+      unfolded.length > 0 &&
+      unfolded[lastIndex].endsWith("=")
+    ) {
+      unfolded[lastIndex] = unfolded[lastIndex].slice(0, -1) + line;
+      continue;
+    }
+
+    if (line.trim()) {
       unfolded.push(line);
+      currentIsQuotedPrintable = /ENCODING=QUOTED-PRINTABLE/i.test(
+        line.split(":")[0]
+      );
     }
   }
 
   return unfolded;
+}
+
+/**
+ * "item1.TEL" 처럼 앞에 붙은 그룹 접두사를 떼어낸다.
+ * (아이폰이 라벨을 붙이려고 쓰는 표기)
+ */
+function stripGroupPrefix(fieldName: string): string {
+  const dotIndex = fieldName.indexOf(".");
+  return dotIndex > -1 ? fieldName.substring(dotIndex + 1) : fieldName;
+}
+
+/** vCard 이스케이프 해제 (\; \, \\ \n) */
+function unescapeVCardValue(value: string): string {
+  return value.replace(/\\([;,\\nN])/g, (_, char) =>
+    char === "n" || char === "N" ? "\n" : char
+  );
+}
+
+/**
+ * ORG는 "회사;부서;팀" 구조라 첫 조각만 그룹 이름으로 쓴다.
+ * 아이폰은 부서가 없어도 "연꾸재단;" 처럼 세미콜론을 남겨 보낸다.
+ */
+function parseOrgField(value: string): {
+  org?: string;
+  rest?: string[];
+} {
+  const parts = value
+    .split(/(?<!\\);/)
+    .map(part => unescapeVCardValue(part).trim());
+
+  // 첫 조각이 비어 있으면(";영업부") 회사명이 없는 것이므로 그대로 둔다
+  const org = parts[0] || undefined;
+  const rest = parts.slice(1).filter(part => part.length > 0);
+
+  return { org, rest: rest.length > 0 ? rest : undefined };
 }
 
 /**
@@ -72,7 +133,9 @@ function parseVCardBlock(vcardText: string): ParsedVCard {
 
     // Parse field name and parameters
     const parts = fieldPart.split(";");
-    const fieldName = parts[0].toUpperCase();
+    // 아이폰은 "item1.TEL", "item2.EMAIL" 처럼 그룹 접두사를 붙여 내보낸다.
+    // 접두사를 떼지 않으면 전화·이메일이 앱에서 통째로 누락된다.
+    const fieldName = stripGroupPrefix(parts[0]).toUpperCase();
     const params = new Map<string, string>();
 
     for (let i = 1; i < parts.length; i++) {
@@ -122,7 +185,9 @@ function parseVCardBlock(vcardText: string): ParsedVCard {
  * Format: Family;Given;Additional;Prefix;Suffix
  */
 function parseNField(nValue: string) {
-  const parts = nValue.split(";").map(p => p.trim());
+  const parts = nValue
+    .split(/(?<!\\);/)
+    .map(part => unescapeVCardValue(part).trim());
   return {
     family: parts[0] || undefined,
     given: parts[1] || undefined,
@@ -169,14 +234,19 @@ export function parseVCardText(text: string): Contact[] {
     const tel = telArray.map(t => t.value || "").filter(t => t);
     const email = emailArray.map(e => e.value || "").filter(e => e);
 
+    const orgValue = getFirstFieldValue(fields.get("ORG"));
+    const noteValue = getFirstFieldValue(fields.get("NOTE"));
+    const parsedOrg = orgValue ? parseOrgField(orgValue) : undefined;
+
     const contact: Contact = {
       id: nanoid(),
-      fn: fnValue,
+      fn: unescapeVCardValue(fnValue),
       n: nFieldValue ? parseNField(nFieldValue) : undefined,
-      org: getFirstFieldValue(fields.get("ORG")),
+      org: parsedOrg?.org,
+      orgRest: parsedOrg?.rest,
       tel,
       email,
-      note: getFirstFieldValue(fields.get("NOTE")),
+      note: noteValue ? unescapeVCardValue(noteValue) : undefined,
       vCardVersion: parsed.version,
       rawVCard: vcardBlock,
     };
@@ -232,6 +302,46 @@ const MANAGED_FIELDS = new Set([
 ]);
 
 /**
+ * 원본에서 그대로 옮겨 담는 필드(주소, 생일 등)를 vCard 3.0에 맞게 손본다.
+ *
+ * vCard 2.1 파일은 한글 값을 CHARSET=EUC-KR;ENCODING=QUOTED-PRINTABLE로 싸서
+ * 보내는데, 3.0에는 그 파라미터가 없다. 그대로 복사하면 내보낸 파일에서
+ * 주소·생일 같은 필드가 깨져 보이므로 값을 풀어 UTF-8 평문으로 바꾼다.
+ */
+function normalizePreservedLine(line: string): string {
+  const colonIndex = line.indexOf(":");
+  if (colonIndex === -1) return line;
+
+  const header = line.substring(0, colonIndex);
+  if (!/ENCODING=QUOTED-PRINTABLE/i.test(header)) return line;
+
+  const charset = extractCharset(header);
+
+  // ADR처럼 ";"로 구성요소를 나누는 필드가 있다.
+  // 구분자는 그대로 두고 각 조각만 디코딩해야, 값 안에 있던 세미콜론(=3B)이
+  // 풀리면서 구분자로 오인돼 주소 칸이 밀리는 일을 막을 수 있다.
+  const value = line
+    .substring(colonIndex + 1)
+    .split(/([;,])/)
+    .map((segment, index) => {
+      // 홀수 번째는 원래부터 구분자였던 자리
+      if (index % 2 === 1) return segment;
+      const decoded = decodeQuotedPrintable(segment, charset).replace(
+        /\r\n|\r/g,
+        "\n"
+      );
+      return escapeVCardValue(decoded);
+    })
+    .join("");
+  const cleanedHeader = header
+    .split(";")
+    .filter(part => !/^\s*(ENCODING|CHARSET)=/i.test(part))
+    .join(";");
+
+  return `${cleanedHeader}:${value}`;
+}
+
+/**
  * Build managed vCard lines from a Contact object
  */
 function buildManagedLines(contact: Contact): string[] {
@@ -241,22 +351,17 @@ function buildManagedLines(contact: Contact): string[] {
   lines.push(...foldLine(`FN:${escapeVCardValue(contact.fn)}`));
 
   // N (Structured Name)
-  if (contact.n) {
-    const nParts = [
-      contact.n.family || "",
-      contact.n.given || "",
-      contact.n.additional || "",
-      contact.n.prefix || "",
-      contact.n.suffix || "",
-    ];
-    lines.push(...foldLine(`N:${nParts.map(escapeVCardValue).join(";")}`));
-  } else {
-    lines.push(...foldLine(`N:${escapeVCardValue(contact.fn)};;;`));
-  }
+  //
+  // 아이폰·구글 연락처는 이름을 표시할 때 FN이 아니라 N(성/이름)을 기준으로
+  // 다시 만든다. 원본 성/이름을 그대로 두면 폰에서 꾸미기 전 이름으로 되돌아가
+  // "고쳤는데 안 바뀐" 것처럼 보인다. 그래서 성 칸에 표시 이름 전체를 넣어
+  // 어느 기기에서든 꾸민 이름 그대로 보이게 한다.
+  lines.push(...foldLine(`N:${escapeVCardValue(contact.fn)};;;;`));
 
-  // ORG (Organization)
-  if (contact.org) {
-    lines.push(...foldLine(`ORG:${escapeVCardValue(contact.org)}`));
+  // ORG (Organization) - 부서/팀 같은 나머지 구성요소는 원본대로 되돌린다
+  if (contact.org || contact.orgRest?.length) {
+    const orgParts = [contact.org ?? "", ...(contact.orgRest ?? [])];
+    lines.push(...foldLine(`ORG:${orgParts.map(escapeVCardValue).join(";")}`));
   }
 
   // TEL (Telephone)
@@ -295,16 +400,37 @@ export function contactToVCard(contact: Contact): string {
 
   // Preserved fields from original rawVCard (ADR, BDAY, PHOTO, X-* etc.)
   if (contact.rawVCard) {
-    for (const line of unfoldLines(contact.rawVCard)) {
+    const rawLines = unfoldLines(contact.rawVCard);
+
+    // "item1.TEL" 처럼 그룹에 묶인 전화·이메일은 위에서 이미 다시 썼다.
+    // 남은 라벨(item1.X-ABLabel)은 가리킬 대상이 없으므로 함께 걷어낸다.
+    // 같은 그룹에 주소·URL 같은 다른 필드가 있을 수 있어 라벨만 골라 지운다.
+    const consumedGroups = new Set<string>();
+    for (const line of rawLines) {
+      const head = line.trim().toUpperCase().split(/[;:]/)[0];
+      const dotIndex = head.indexOf(".");
+      if (dotIndex > -1 && MANAGED_FIELDS.has(head.substring(dotIndex + 1))) {
+        consumedGroups.add(head.substring(0, dotIndex));
+      }
+    }
+
+    for (const line of rawLines) {
       const trimmed = line.trim();
       if (!trimmed) continue;
       const upper = trimmed.toUpperCase();
       if (upper.startsWith("BEGIN:VCARD") || upper.startsWith("END:VCARD"))
         continue;
-      const fieldName = upper.split(/[;:]/)[0];
-      if (!MANAGED_FIELDS.has(fieldName)) {
-        lines.push(...foldLine(trimmed));
-      }
+
+      const head = upper.split(/[;:]/)[0];
+      const dotIndex = head.indexOf(".");
+      const group = dotIndex > -1 ? head.substring(0, dotIndex) : "";
+      const fieldName = dotIndex > -1 ? head.substring(dotIndex + 1) : head;
+
+      if (MANAGED_FIELDS.has(fieldName)) continue;
+      if (group && consumedGroups.has(group) && fieldName.startsWith("X-AB"))
+        continue;
+
+      lines.push(...foldLine(normalizePreservedLine(trimmed)));
     }
   }
 

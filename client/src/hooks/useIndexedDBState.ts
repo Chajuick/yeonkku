@@ -3,6 +3,7 @@ import {
   clearAppState,
   getDefaultAppState,
   loadAppState,
+  requestPersistentStorage,
   saveAppState,
 } from "@/lib/storage";
 import { useEffect, useRef, useState } from "react";
@@ -16,6 +17,7 @@ export function useIndexedDBState() {
   const [state, setState] = useState<AppState | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const undoStackRef = useRef<Contact[][]>([]);
+  const persistRequestedRef = useRef(false);
 
   // Load state on mount
   useEffect(() => {
@@ -41,6 +43,13 @@ export function useIndexedDBState() {
   useEffect(() => {
     if (state && !isLoading) {
       const timer = setTimeout(() => {
+        // 실제로 지킬 데이터가 생긴 시점에만 영구 저장소를 요청한다.
+        // (빈 화면에서 브라우저 권한 프롬프트가 먼저 뜨는 걸 피하려는 것)
+        if (!persistRequestedRef.current && state.contacts.length > 0) {
+          persistRequestedRef.current = true;
+          void requestPersistentStorage();
+        }
+
         saveAppState(state).catch(error => {
           console.error("Failed to save state:", error);
         });
