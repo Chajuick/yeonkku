@@ -45,16 +45,35 @@ import {
   Download,
   Lightbulb,
   Palette,
+  Undo2,
+  ShieldCheck,
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { i18n } from "@/lib/i18n";
-import { TAB_STEP_CLASS, TAB_TRIGGER_CLASS } from "@/lib/tabStyles";
+import {
+  TAB_LIST_CLASS,
+  TAB_STEP_CLASS,
+  TAB_TRIGGER_CLASS,
+} from "@/lib/tabStyles";
 
 /** 미리보기 확인을 기다리는 일괄 작업 */
 type PendingBatch =
   | { kind: BatchTargetKind; mode: "add" | "remove"; item: PrefixSuffixItem }
   | { kind: "group"; groupName: string };
+
+/** 첫 로딩 동안 보여줄 뼈대. 빈 화면에 글자 하나보다 덜 불안하다 */
+function HomeSkeleton() {
+  return (
+    <div className="min-h-dvh app-bg">
+      <div className="mx-auto w-full max-w-5xl space-y-4 px-4 pt-20 sm:px-6">
+        <div className="h-12 w-full animate-pulse rounded-2xl bg-muted" />
+        <div className="h-40 w-full animate-pulse rounded-2xl bg-muted" />
+        <div className="h-64 w-full animate-pulse rounded-2xl bg-muted" />
+      </div>
+    </div>
+  );
+}
 
 /**
  * Main Home Page Component
@@ -115,11 +134,7 @@ export default function Home() {
   ]);
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen diary-bg flex items-center justify-center">
-        <p className="text-muted-foreground font-body">로딩 중...</p>
-      </div>
-    );
+    return <HomeSkeleton />;
   }
 
   // Handle import
@@ -409,84 +424,100 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen diary-bg py-8">
-      <div className="max-w-7xl mx-auto px-4 space-y-8">
-        {/* Header */}
-        <div className="text-center py-4 space-y-2 relative">
-          <div className="flex items-center justify-center gap-4 mb-2">
-            <hr className="diary-divider w-16" />
-            <span className="text-muted-foreground text-xs tracking-widest uppercase">
-              연락처 관리
+    <div className="min-h-dvh app-bg">
+      {/* 상단 바 — 스크롤해도 앱 이름과 되돌리기는 항상 손에 닿는 자리에 둔다 */}
+      <header className="sticky top-0 z-40 border-b border-border/70 bg-background/80 backdrop-blur-xl">
+        <div className="mx-auto flex h-14 w-full max-w-5xl items-center gap-3 px-4 sm:px-6">
+          <div className="flex min-w-0 items-center gap-2.5">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-primary text-sm font-bold text-primary-foreground">
+              연
             </span>
-            <hr className="diary-divider w-16" />
+            <div className="min-w-0">
+              <p className="truncate text-[15px] font-bold leading-tight">
+                {i18n.appTitle}
+              </p>
+              <p className="hidden truncate text-xs leading-tight text-muted-foreground sm:block">
+                연락처 이름을 한 번에 정리해요
+              </p>
+            </div>
           </div>
-          <h1 className="text-5xl font-heading font-bold tracking-tight text-foreground">
-            {i18n.appTitle}
-          </h1>
-          <p className="text-base text-muted-foreground font-body">
-            {i18n.appSubtitle}
-          </p>
-          <div className="flex items-center justify-center gap-4 mt-2">
-            <hr className="diary-divider w-24" />
+
+          <div className="ml-auto flex items-center gap-1.5">
+            {hasContacts && (
+              <span className="tabular hidden rounded-full bg-muted px-3 py-1.5 text-xs font-semibold text-secondary-foreground sm:inline-block">
+                {state.contacts.length}개
+              </span>
+            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={undo}
+              disabled={!canUndo}
+              className="press h-9 rounded-xl px-3 text-muted-foreground"
+            >
+              <Undo2 className="h-4 w-4" />
+              <span className="hidden sm:inline">되돌리기</span>
+            </Button>
           </div>
         </div>
+      </header>
 
-        {/* Main Tabs */}
-        <Tabs defaultValue="contacts" className="space-y-6">
+      <main className="mx-auto w-full max-w-5xl px-4 pb-16 sm:px-6">
+        <Tabs defaultValue="contacts" className="gap-0">
           {/* 탭에 번호를 붙여 가져오기 → 꾸미기 → 내보내기 순서를 드러낸다.
               연락처가 없으면 2·3단계는 눌러도 빈 화면이라 잠가 둔다. */}
-          <TabsList className="grid w-full grid-cols-4 rounded-2xl p-1">
-            <TabsTrigger value="contacts" className={TAB_TRIGGER_CLASS}>
-              <span className={TAB_STEP_CLASS}>1</span>
-              <BookOpen className="w-4 h-4" />
-              <span className="hidden sm:inline">{i18n.tabContacts}</span>
-            </TabsTrigger>
-            <TabsTrigger
-              value="prefixsuffix"
-              disabled={!hasContacts}
-              title={hasContacts ? undefined : i18n.tabLockedHint}
-              className={TAB_TRIGGER_CLASS}
-            >
-              <span className={TAB_STEP_CLASS}>2</span>
-              <Tags className="w-4 h-4" />
-              <span className="hidden sm:inline">{i18n.tabPrefixSuffix}</span>
-            </TabsTrigger>
-            <TabsTrigger
-              value="export"
-              disabled={!hasContacts}
-              title={hasContacts ? undefined : i18n.tabLockedHint}
-              className={TAB_TRIGGER_CLASS}
-            >
-              <span className={TAB_STEP_CLASS}>3</span>
-              <Download className="w-4 h-4" />
-              <span className="hidden sm:inline">{i18n.tabExport}</span>
-            </TabsTrigger>
-            <TabsTrigger value="settings" className={TAB_TRIGGER_CLASS}>
-              <Settings className="w-4 h-4" />
-              <span className="hidden sm:inline">{i18n.tabSettings}</span>
-            </TabsTrigger>
-          </TabsList>
+          <div className="sticky top-14 z-30 -mx-4 bg-background/85 px-4 py-3 backdrop-blur-xl sm:-mx-6 sm:px-6">
+            <TabsList className={`${TAB_LIST_CLASS} grid grid-cols-4`}>
+              <TabsTrigger value="contacts" className={TAB_TRIGGER_CLASS}>
+                <span className={TAB_STEP_CLASS}>1</span>
+                <BookOpen className="hidden h-4 w-4 sm:block" />
+                <span className="truncate">{i18n.tabContacts}</span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="prefixsuffix"
+                disabled={!hasContacts}
+                title={hasContacts ? undefined : i18n.tabLockedHint}
+                className={TAB_TRIGGER_CLASS}
+              >
+                <span className={TAB_STEP_CLASS}>2</span>
+                <Tags className="hidden h-4 w-4 sm:block" />
+                <span className="truncate">{i18n.tabPrefixSuffix}</span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="export"
+                disabled={!hasContacts}
+                title={hasContacts ? undefined : i18n.tabLockedHint}
+                className={TAB_TRIGGER_CLASS}
+              >
+                <span className={TAB_STEP_CLASS}>3</span>
+                <Download className="hidden h-4 w-4 sm:block" />
+                <span className="truncate">{i18n.tabExport}</span>
+              </TabsTrigger>
+              <TabsTrigger value="settings" className={TAB_TRIGGER_CLASS}>
+                <Settings className="h-4 w-4" />
+                <span className="truncate">{i18n.tabSettings}</span>
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
           {/* Contacts Tab */}
-          <TabsContent value="contacts" className="space-y-6">
+          <TabsContent value="contacts" className="space-y-4">
             {!hasContacts ? (
               <>
                 <WelcomeGuide onLoadSample={handleLoadSample} />
-                <VcfExportGuide />
                 <VcfImporter onImport={handleImport} />
+                <VcfExportGuide />
               </>
             ) : (
               <>
                 {/* 선택이 없으면 하단 액션바가 숨겨져 다음 행동이 안 보인다.
                     체크하는 순간 사라지는 안내를 대신 띄운다. */}
                 {selectedIds.size === 0 && (
-                  <div className="flex gap-3 rounded-2xl border border-dashed bg-muted/40 p-4">
-                    <Lightbulb className="mt-0.5 h-5 w-5 shrink-0 text-amber-500" />
-                    <div>
-                      <p className="font-medium">{i18n.nextStepTitle}</p>
-                      <p className="font-body text-sm leading-relaxed text-muted-foreground">
-                        {i18n.nextStepDesc}
-                      </p>
+                  <div className="callout callout-info animate-rise">
+                    <Lightbulb className="mt-0.5 h-5 w-5 shrink-0" />
+                    <div className="min-w-0">
+                      <p className="font-semibold">{i18n.nextStepTitle}</p>
+                      <p className="mt-0.5">{i18n.nextStepDesc}</p>
                     </div>
                   </div>
                 )}
@@ -526,17 +557,18 @@ export default function Home() {
             {hasContacts && (
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg">{i18n.importMore}</CardTitle>
+                  <CardTitle className="text-base">{i18n.importMore}</CardTitle>
+                  <CardDescription>{i18n.importDescription}</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <VcfImporter onImport={handleImport} />
+                  <VcfImporter onImport={handleImport} bare />
                 </CardContent>
               </Card>
             )}
           </TabsContent>
 
           {/* Prefix/Suffix Tab */}
-          <TabsContent value="prefixsuffix" className="space-y-6">
+          <TabsContent value="prefixsuffix" className="space-y-4">
             <GroupManager
               groups={existingGroups}
               countByGroup={countByGroup}
@@ -557,125 +589,140 @@ export default function Home() {
           </TabsContent>
 
           {/* Settings Tab */}
-          <TabsContent value="settings" className="space-y-6">
+          <TabsContent value="settings" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Settings className="w-5 h-5" />
-                  {i18n.settingsTitle}
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <Palette className="h-4 w-4 text-muted-foreground" />
+                  화면
                 </CardTitle>
+                <CardDescription>
+                  포인트 색과 밝기를 골라보세요. 바로 반영됩니다.
+                </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-6">
-                {/* Theme Section */}
-                <div className="space-y-4">
-                  <h3 className="font-semibold flex items-center gap-2">
-                    <Palette className="w-4 h-4" />
-                    테마
-                  </h3>
-                  <ThemeSelector />
-                </div>
+              <CardContent>
+                <ThemeSelector />
+              </CardContent>
+            </Card>
 
-                <hr className="diary-divider" />
-
-                {/* Separator Settings */}
-                <div className="space-y-4">
-                  <h3 className="font-semibold">{i18n.settingsSeparators}</h3>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="prefix-sep">
-                      {i18n.settingsPrefixSeparator}
-                    </Label>
-                    <Input
-                      id="prefix-sep"
-                      value={state.settings.prefixSeparator}
-                      onChange={e =>
-                        handleSeparatorChange("prefixSeparator", e.target.value)
-                      }
-                      placeholder="공백"
-                      maxLength={5}
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      예: "Dr." + " " + "John" = "Dr. John"
-                    </p>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="suffix-sep">
-                      {i18n.settingsSuffixSeparator}
-                    </Label>
-                    <Input
-                      id="suffix-sep"
-                      value={state.settings.suffixSeparator}
-                      onChange={e =>
-                        handleSeparatorChange("suffixSeparator", e.target.value)
-                      }
-                      placeholder="공백"
-                      maxLength={5}
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      예: "John" + " " + "Jr." = "John Jr."
-                    </p>
-                  </div>
-                </div>
-
-                {/* Options */}
-                <div className="space-y-4 border-t pt-4">
-                  <h3 className="font-semibold">{i18n.settingsOptions}</h3>
-
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="prevent-dup">
-                      {i18n.settingsPreventDuplicates}
-                    </Label>
-                    <Switch
-                      id="prevent-dup"
-                      checked={state.settings.preventDuplicates}
-                      onCheckedChange={checked => {
-                        updateState({
-                          settings: {
-                            ...state.settings,
-                            preventDuplicates: checked,
-                          },
-                        });
-                      }}
-                    />
-                  </div>
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <Tags className="h-4 w-4 text-muted-foreground" />
+                  {i18n.settingsSeparators}
+                </CardTitle>
+                <CardDescription>
+                  붙일 때 이름과 표기 사이에 들어가는 글자예요.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-5">
+                <div className="space-y-2">
+                  <Label htmlFor="prefix-sep" className="text-sm font-medium">
+                    {i18n.settingsPrefixSeparator}
+                  </Label>
+                  <Input
+                    id="prefix-sep"
+                    value={state.settings.prefixSeparator}
+                    onChange={e =>
+                      handleSeparatorChange("prefixSeparator", e.target.value)
+                    }
+                    placeholder="공백"
+                    maxLength={5}
+                    className="h-12 rounded-xl border-transparent bg-muted px-4"
+                  />
                   <p className="text-xs text-muted-foreground">
-                    {i18n.settingsPreventDuplicatesDesc}
+                    예: "Dr." + " " + "John" = "Dr. John"
                   </p>
                 </div>
 
-                {/* Danger Zone */}
-                <div className="space-y-4 border-t pt-4">
-                  <h3 className="font-semibold text-destructive">
-                    {i18n.settingsDangerZone}
-                  </h3>
-                  <Button
-                    variant="destructive"
-                    onClick={() => setConfirmOpen(true)}
-                    className="w-full"
+                <div className="space-y-2">
+                  <Label htmlFor="suffix-sep" className="text-sm font-medium">
+                    {i18n.settingsSuffixSeparator}
+                  </Label>
+                  <Input
+                    id="suffix-sep"
+                    value={state.settings.suffixSeparator}
+                    onChange={e =>
+                      handleSeparatorChange("suffixSeparator", e.target.value)
+                    }
+                    placeholder="공백"
+                    maxLength={5}
+                    className="h-12 rounded-xl border-transparent bg-muted px-4"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    예: "John" + " " + "Jr." = "John Jr."
+                  </p>
+                </div>
+
+                <div className="flex items-center justify-between gap-4 rounded-2xl bg-muted/60 p-4">
+                  <Label
+                    htmlFor="prevent-dup"
+                    className="block text-sm font-medium"
                   >
-                    <Trash2 className="w-4 h-4 mr-2" />
-                    {i18n.settingsClearAll}
-                  </Button>
-                  <p className="text-xs text-muted-foreground">
-                    {i18n.settingsClearAllDesc}
-                  </p>
+                    {i18n.settingsPreventDuplicates}
+                    <span className="mt-0.5 block text-xs font-normal text-muted-foreground">
+                      {i18n.settingsPreventDuplicatesDesc}
+                    </span>
+                  </Label>
+                  <Switch
+                    id="prevent-dup"
+                    checked={state.settings.preventDuplicates}
+                    onCheckedChange={checked => {
+                      updateState({
+                        settings: {
+                          ...state.settings,
+                          preventDuplicates: checked,
+                        },
+                      });
+                    }}
+                  />
                 </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <ShieldCheck className="h-4 w-4 text-muted-foreground" />내
+                  데이터
+                </CardTitle>
+                <CardDescription>
+                  연락처는 이 브라우저 안에만 저장되고 어디로도 전송되지 않아요.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <Button
+                  variant="ghost"
+                  onClick={() => setConfirmOpen(true)}
+                  className="press h-12 w-full justify-start rounded-xl bg-destructive/8 text-destructive hover:bg-destructive/15 hover:text-destructive"
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  {i18n.settingsClearAll}
+                </Button>
+                <p className="text-xs text-muted-foreground">
+                  {i18n.settingsClearAllDesc}
+                </p>
               </CardContent>
             </Card>
           </TabsContent>
 
           {/* Export Tab */}
-          <TabsContent value="export" className="space-y-6">
+          <TabsContent value="export" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle>{i18n.exportTitle}</CardTitle>
+                <CardTitle className="text-base">{i18n.exportTitle}</CardTitle>
                 <CardDescription>{i18n.exportDescription}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="p-4 bg-muted rounded-lg">
-                  <p className="font-medium">
-                    {i18n.exportTotalContacts}: {state.contacts.length}
+                <div className="rounded-2xl bg-muted/60 p-5 text-center">
+                  <p className="text-sm text-muted-foreground">
+                    {i18n.exportTotalContacts}
+                  </p>
+                  <p className="tabular mt-1 text-3xl font-bold tracking-tight">
+                    {state.contacts.length}
+                    <span className="ml-1 text-base font-semibold text-muted-foreground">
+                      개
+                    </span>
                   </p>
                 </div>
                 <ExportButton contacts={state.contacts} />
@@ -684,7 +731,11 @@ export default function Home() {
             <PhoneApplyGuide />
           </TabsContent>
         </Tabs>
-      </div>
+
+        <p className="pt-10 text-center text-xs text-muted-foreground">
+          연꾸 · 모든 처리는 기기 안에서만 이뤄집니다
+        </p>
+      </main>
 
       {/* Batch Preview Modal */}
       <BatchPreviewModal

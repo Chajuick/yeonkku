@@ -1,69 +1,69 @@
-export type ThemeId =
-  | "pastel-green-light"
-  | "pastel-green-dark"
-  | "pastel-pink-light"
-  | "pastel-pink-dark"
-  | "cream-beige-light"
-  | "cream-beige-dark"
-  | "soft-blue-light"
-  | "soft-blue-dark";
+/**
+ * 테마.
+ *
+ * 회색 계열(배경·카드·글자)은 모든 테마가 똑같이 쓰고, 포인트 색 하나만
+ * 바꾼다. 색을 여러 개 흩뿌리지 않는 편이 화면이 훨씬 정돈돼 보인다.
+ * 실제 색값은 index.css의 `[data-theme^="..."]` 블록에 있다.
+ *
+ * ThemeId는 예전에 저장된 값을 그대로 쓰기 위해 이름을 유지한다
+ * (localStorage에 "pastel-green-light" 같은 값이 남아 있을 수 있다).
+ */
 
-export interface ThemeMeta {
-  id: ThemeId;
+export type ThemeAccent =
+  | "soft-blue"
+  | "pastel-green"
+  | "pastel-pink"
+  | "cream-beige";
+
+export type ThemeMode = "light" | "dark";
+
+export type ThemeId = `${ThemeAccent}-${ThemeMode}`;
+
+export interface AccentMeta {
+  id: ThemeAccent;
   label: string;
-  isDark: boolean;
-  previewColors: { bg: string; primary: string; accent: string };
+  /** 선택 UI에 찍히는 동그라미 색 (라이트 기준 포인트 색) */
+  swatch: string;
 }
 
-export const THEMES: ThemeMeta[] = [
-  {
-    id: "pastel-green-light",
-    label: "Pastel Green",
-    isDark: false,
-    previewColors: { bg: "#f0faf4", primary: "#5f9e7a", accent: "#d4edde" },
-  },
-  {
-    id: "pastel-green-dark",
-    label: "Forest Night",
-    isDark: true,
-    previewColors: { bg: "#1a2e25", primary: "#7ec8a0", accent: "#2a4a35" },
-  },
-  {
-    id: "pastel-pink-light",
-    label: "Pastel Pink",
-    isDark: false,
-    previewColors: { bg: "#fdf2f5", primary: "#c27a8a", accent: "#f5d5de" },
-  },
-  {
-    id: "pastel-pink-dark",
-    label: "Romantic Night",
-    isDark: true,
-    previewColors: { bg: "#2a1a20", primary: "#e8a0b0", accent: "#3d2430" },
-  },
-  {
-    id: "cream-beige-light",
-    label: "Cream Beige",
-    isDark: false,
-    previewColors: { bg: "#fdf8f0", primary: "#8b6f4a", accent: "#f0e6d3" },
-  },
-  {
-    id: "cream-beige-dark",
-    label: "Vintage Night",
-    isDark: true,
-    previewColors: { bg: "#1e1a16", primary: "#c4a87a", accent: "#2e2820" },
-  },
-  {
-    id: "soft-blue-light",
-    label: "Soft Blue",
-    isDark: false,
-    previewColors: { bg: "#f0f6ff", primary: "#6b8fd8", accent: "#d5e4ff" },
-  },
-  {
-    id: "soft-blue-dark",
-    label: "Night Sky",
-    isDark: true,
-    previewColors: { bg: "#1a1f2e", primary: "#89b0e8", accent: "#252d42" },
-  },
+export const ACCENTS: AccentMeta[] = [
+  { id: "soft-blue", label: "블루", swatch: "#2c74dc" },
+  { id: "pastel-green", label: "그린", swatch: "#05885a" },
+  { id: "pastel-pink", label: "핑크", swatch: "#ce4373" },
+  { id: "cream-beige", label: "샌드", swatch: "#a86822" },
 ];
 
-export const DEFAULT_THEME: ThemeId = "pastel-green-light";
+export const MODES: { id: ThemeMode; label: string }[] = [
+  { id: "light", label: "라이트" },
+  { id: "dark", label: "다크" },
+];
+
+export const DEFAULT_THEME: ThemeId = "soft-blue-light";
+
+const ACCENT_IDS = ACCENTS.map(a => a.id);
+
+/** 저장된 문자열을 신뢰하지 않고 항상 유효한 ThemeId로 되돌린다 */
+export function normalizeThemeId(value: string | null): ThemeId {
+  if (!value) return DEFAULT_THEME;
+
+  const mode: ThemeMode = value.endsWith("-dark") ? "dark" : "light";
+  const accent = ACCENT_IDS.find(id => value.startsWith(id));
+
+  return accent ? `${accent}-${mode}` : DEFAULT_THEME;
+}
+
+export function accentOf(id: ThemeId): ThemeAccent {
+  return normalizeThemeId(id).replace(/-(light|dark)$/, "") as ThemeAccent;
+}
+
+export function modeOf(id: ThemeId): ThemeMode {
+  return id.endsWith("-dark") ? "dark" : "light";
+}
+
+export function composeThemeId(accent: ThemeAccent, mode: ThemeMode): ThemeId {
+  return `${accent}-${mode}`;
+}
+
+export function isDarkTheme(id: ThemeId): boolean {
+  return modeOf(id) === "dark";
+}

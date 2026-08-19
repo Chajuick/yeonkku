@@ -1,8 +1,8 @@
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -18,7 +18,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { PrefixSuffixItem } from "@/../../shared/types";
 import { i18n } from "@/lib/i18n";
-import { ChevronDown, Trash2, X, Zap } from "lucide-react";
+import { ChevronDown, FolderInput, Minus, Plus, Trash2, X } from "lucide-react";
 import { Fragment, useState } from "react";
 
 export type BatchTargetKind = "prefix" | "suffix" | "orgPrefix" | "orgSuffix";
@@ -46,6 +46,8 @@ interface BatchActionsBarProps {
  *
  * 예전에는 "켜 둔 항목 전부"가 한꺼번에 적용됐는데, 그러면 대상마다 켜고 끄는
  * 준비 동작이 필요했다. 지금은 체크한 뒤 무엇을 붙일지 여기서 바로 고른다.
+ *
+ * 화면 아래에 떠 있는 카드 형태라 폰에서 엄지로 닿는 자리에 놓인다.
  */
 export default function BatchActionsBar({
   selectedCount,
@@ -84,17 +86,24 @@ export default function BatchActionsBar({
   ];
 
   const renderMenu = (mode: "add" | "remove") => (
-    <DropdownMenuContent align="start" className="w-56">
+    <DropdownMenuContent
+      align="start"
+      side="top"
+      sideOffset={8}
+      className="w-60 rounded-2xl p-1.5"
+    >
       {sections.map((section, index) => (
         <Fragment key={section.kind}>
           {index > 0 && <DropdownMenuSeparator />}
-          <DropdownMenuLabel className="text-xs text-muted-foreground">
+          <DropdownMenuLabel className="px-2 text-xs font-semibold text-muted-foreground">
             {section.label}
           </DropdownMenuLabel>
           {section.items.length === 0 ? (
-            <DropdownMenuItem disabled>{i18n.batchNoItems}</DropdownMenuItem>
+            <DropdownMenuItem disabled className="rounded-xl text-xs">
+              {i18n.batchNoItems}
+            </DropdownMenuItem>
           ) : section.items.filter(item => item.enabled).length === 0 ? (
-            <DropdownMenuItem disabled>
+            <DropdownMenuItem disabled className="rounded-xl text-xs">
               {i18n.batchAllDisabled}
             </DropdownMenuItem>
           ) : (
@@ -104,6 +113,7 @@ export default function BatchActionsBar({
                 <DropdownMenuItem
                   key={item.id}
                   onSelect={() => onApplyItem(section.kind, mode, item)}
+                  className="rounded-xl py-2 font-medium"
                 >
                   {item.text}
                 </DropdownMenuItem>
@@ -124,22 +134,45 @@ export default function BatchActionsBar({
   };
 
   return (
-    <Card className="sticky bottom-0 z-10 border-t-2">
-      <CardContent className="py-4">
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-2">
-            <Zap className="w-5 h-5 text-amber-500" />
-            <span className="font-medium">
-              {selectedCount}
-              {i18n.batchSelected}
-            </span>
-          </div>
+    <div className="safe-bottom sticky bottom-0 z-30 -mx-1 pt-3">
+      <div className="animate-rise rounded-3xl border bg-popover/95 p-3 shadow-lg backdrop-blur-xl">
+        {/* 선택 상태 줄 */}
+        <div className="mb-2.5 flex items-center gap-2 px-1">
+          <span className="text-sm font-semibold">
+            <span className="tabular text-primary">{selectedCount}</span>
+            {i18n.batchSelected}
+          </span>
 
+          <Button
+            onClick={onDeleteSelected}
+            variant="ghost"
+            size="sm"
+            aria-label={i18n.batchDelete}
+            className="press ml-auto h-8 rounded-lg px-2 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+          >
+            <Trash2 className="h-4 w-4" />
+            <span className="hidden sm:inline">{i18n.batchDelete}</span>
+          </Button>
+          <Button
+            onClick={onClearSelection}
+            variant="ghost"
+            size="sm"
+            aria-label={i18n.batchClearSelection}
+            className="press h-8 rounded-lg px-2 text-muted-foreground"
+          >
+            <X className="h-4 w-4" />
+            <span className="hidden sm:inline">{i18n.batchClearSelection}</span>
+          </Button>
+        </div>
+
+        {/* 행동 줄 — 폰에서는 3등분, 넓은 화면에서는 왼쪽 정렬 */}
+        <div className="grid grid-cols-3 gap-2 sm:flex sm:flex-wrap">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button size="sm">
-                {i18n.batchAttach}
-                <ChevronDown className="ml-1 h-4 w-4" />
+              <Button className="press h-12 gap-1 rounded-2xl px-2 text-[13px] font-bold sm:gap-2 sm:px-4 sm:text-sm">
+                <Plus className="h-4 w-4" />
+                <span className="truncate">{i18n.batchAttach}</span>
+                <ChevronDown className="hidden h-3.5 w-3.5 opacity-70 sm:block" />
               </Button>
             </DropdownMenuTrigger>
             {renderMenu("add")}
@@ -147,9 +180,13 @@ export default function BatchActionsBar({
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button size="sm" variant="outline">
-                {i18n.batchDetach}
-                <ChevronDown className="ml-1 h-4 w-4" />
+              <Button
+                variant="secondary"
+                className="press h-12 gap-1 rounded-2xl px-2 text-[13px] font-bold sm:gap-2 sm:px-4 sm:text-sm"
+              >
+                <Minus className="h-4 w-4" />
+                <span className="truncate">{i18n.batchDetach}</span>
+                <ChevronDown className="hidden h-3.5 w-3.5 opacity-70 sm:block" />
               </Button>
             </DropdownMenuTrigger>
             {renderMenu("remove")}
@@ -157,17 +194,26 @@ export default function BatchActionsBar({
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button size="sm" variant="outline">
-                {i18n.batchAssignGroup}
-                <ChevronDown className="ml-1 h-4 w-4" />
+              <Button
+                variant="secondary"
+                className="press h-12 gap-1 rounded-2xl px-2 text-[13px] font-bold sm:gap-2 sm:px-4 sm:text-sm"
+              >
+                <FolderInput className="h-4 w-4" />
+                <span className="truncate">{i18n.batchAssignGroup}</span>
+                <ChevronDown className="hidden h-3.5 w-3.5 opacity-70 sm:block" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-56">
-              <DropdownMenuLabel className="text-xs text-muted-foreground">
+            <DropdownMenuContent
+              align="start"
+              side="top"
+              sideOffset={8}
+              className="w-60 rounded-2xl p-1.5"
+            >
+              <DropdownMenuLabel className="px-2 text-xs font-semibold text-muted-foreground">
                 {i18n.batchExistingGroups}
               </DropdownMenuLabel>
               {existingGroups.length === 0 ? (
-                <DropdownMenuItem disabled>
+                <DropdownMenuItem disabled className="rounded-xl text-xs">
                   {i18n.batchNoGroups}
                 </DropdownMenuItem>
               ) : (
@@ -175,66 +221,63 @@ export default function BatchActionsBar({
                   <DropdownMenuItem
                     key={group}
                     onSelect={() => onAssignGroup(group)}
+                    className="rounded-xl py-2 font-medium"
                   >
                     {group}
                   </DropdownMenuItem>
                 ))
               )}
               <DropdownMenuSeparator />
-              <DropdownMenuItem onSelect={() => setNewGroupOpen(true)}>
+              <DropdownMenuItem
+                onSelect={() => setNewGroupOpen(true)}
+                className="rounded-xl py-2 font-medium text-primary"
+              >
                 {i18n.batchNewGroup}
               </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => onAssignGroup("")}>
+              <DropdownMenuItem
+                onSelect={() => onAssignGroup("")}
+                className="rounded-xl py-2"
+              >
                 {i18n.batchClearGroup}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-
-          <Button
-            onClick={onClearSelection}
-            variant="ghost"
-            size="sm"
-            className="ml-auto text-muted-foreground"
-          >
-            <X className="w-4 h-4 mr-1" />
-            {i18n.batchClearSelection}
-          </Button>
-
-          {/* 선택 삭제는 되돌리기 어려우니 다른 액션과 떼어 놓는다 */}
-          <Button
-            onClick={onDeleteSelected}
-            variant="ghost"
-            size="sm"
-            className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-          >
-            <Trash2 className="w-4 h-4 mr-1" />
-            {i18n.batchDelete}
-          </Button>
         </div>
-      </CardContent>
+      </div>
 
       <Dialog open={newGroupOpen} onOpenChange={setNewGroupOpen}>
-        <DialogContent className="max-w-sm">
+        <DialogContent className="max-w-sm rounded-3xl">
           <DialogHeader>
             <DialogTitle>{i18n.batchNewGroupTitle}</DialogTitle>
+            <DialogDescription className="sr-only">
+              새 그룹 이름을 입력하면 선택한 연락처를 그 그룹에 넣습니다.
+            </DialogDescription>
           </DialogHeader>
           <Input
             value={newGroupName}
             onChange={e => setNewGroupName(e.target.value)}
             onKeyDown={e => e.key === "Enter" && confirmNewGroup()}
             placeholder={i18n.batchNewGroupPlaceholder}
+            className="h-12 rounded-xl border-transparent bg-muted px-4"
             autoFocus
           />
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setNewGroupOpen(false)}>
+          <DialogFooter className="gap-2">
+            <Button
+              variant="secondary"
+              onClick={() => setNewGroupOpen(false)}
+              className="press h-12 flex-1 rounded-xl font-semibold"
+            >
               {i18n.previewCancel}
             </Button>
-            <Button onClick={confirmNewGroup}>
+            <Button
+              onClick={confirmNewGroup}
+              className="press h-12 flex-1 rounded-xl font-bold"
+            >
               {i18n.batchNewGroupConfirm}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </Card>
+    </div>
   );
 }

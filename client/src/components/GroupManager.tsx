@@ -1,4 +1,3 @@
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -55,8 +54,8 @@ export default function GroupManager({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <FolderPlus className="h-5 w-5" />
+        <CardTitle className="flex items-center gap-2 text-base">
+          <FolderPlus className="h-4 w-4 text-muted-foreground" />
           {i18n.groupTitle}
         </CardTitle>
         <CardDescription>{i18n.groupDescription}</CardDescription>
@@ -68,30 +67,33 @@ export default function GroupManager({
             onChange={e => setName(e.target.value)}
             onKeyDown={e => e.key === "Enter" && submit()}
             placeholder={i18n.groupPlaceholder}
+            className="h-12 rounded-xl border-transparent bg-muted px-4"
           />
-          <Button onClick={submit} className="shrink-0">
-            <Plus className="mr-1 h-4 w-4" />
+          <Button
+            onClick={submit}
+            className="press h-12 shrink-0 rounded-xl px-5 font-semibold"
+          >
+            <Plus className="h-4 w-4" />
             {i18n.groupAdd}
           </Button>
         </div>
 
         {groups.length === 0 ? (
-          <p className="py-2 text-center font-body text-sm text-muted-foreground">
+          <p className="rounded-2xl bg-muted/50 py-6 text-center text-sm text-muted-foreground">
             {i18n.groupEmpty}
           </p>
         ) : (
-          <div className="flex flex-wrap gap-2">
+          <ul className="flex flex-wrap gap-2">
             {groups.map(group => {
               const count = countByGroup.get(group) ?? 0;
               const removable = removableGroups.includes(group);
               return (
-                <Badge
+                <li
                   key={group}
-                  variant="secondary"
-                  className="gap-1.5 rounded-full py-1 pl-3 pr-1.5 text-sm font-normal"
+                  className="flex items-center gap-1.5 rounded-full bg-muted py-1.5 pl-3.5 pr-2 text-sm font-medium"
                 >
-                  {group}
-                  <span className="text-xs text-muted-foreground">
+                  <span className="max-w-40 truncate">{group}</span>
+                  <span className="tabular text-xs text-muted-foreground">
                     {count}
                     {i18n.groupCountUnit}
                   </span>
@@ -100,18 +102,20 @@ export default function GroupManager({
                       type="button"
                       onClick={() => onRemove(group)}
                       aria-label={`${group} ${i18n.groupRemove}`}
-                      className="rounded-full p-0.5 transition-colors hover:bg-destructive/15 hover:text-destructive"
+                      className="press flex h-5 w-5 items-center justify-center rounded-full text-muted-foreground hover:bg-destructive/15 hover:text-destructive"
                     >
                       <X className="h-3.5 w-3.5" />
                     </button>
                   )}
-                </Badge>
+                </li>
               );
             })}
-          </div>
+          </ul>
         )}
 
-        <p className="text-xs text-muted-foreground">{i18n.groupRemoveHint}</p>
+        <p className="text-xs leading-relaxed text-muted-foreground">
+          {i18n.groupRemoveHint}
+        </p>
       </CardContent>
     </Card>
   );

@@ -1,4 +1,3 @@
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -17,7 +16,7 @@ import { Switch } from "@/components/ui/switch";
 import { Contact } from "@/../../shared/types";
 import { DuplicateGroup, DuplicateReason, isWeakGroup } from "@/lib/duplicates";
 import { i18n } from "@/lib/i18n";
-import { ChevronDown, CopyCheck, Merge } from "lucide-react";
+import { Check, ChevronDown, CopyCheck, Merge } from "lucide-react";
 import { useState } from "react";
 
 interface DuplicateReviewProps {
@@ -54,25 +53,31 @@ export default function DuplicateReview({
   );
 
   return (
-    <Card>
+    <Card className="gap-0 overflow-hidden">
       <Collapsible open={open} onOpenChange={setOpen}>
         <CardHeader>
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                <CopyCheck className="h-5 w-5" />
+            <div className="min-w-0">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-warning">
+                  <CopyCheck className="h-4 w-4 text-warning-foreground" />
+                </span>
                 {i18n.dupTitle}
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="tabular mt-1">
                 {groups.length}
                 {i18n.dupGroupCount}
               </CardDescription>
             </div>
             <CollapsibleTrigger asChild>
-              <Button variant="outline" size="sm" className="rounded-xl">
+              <Button
+                variant="secondary"
+                size="sm"
+                className="press h-10 shrink-0 rounded-xl px-4 font-semibold"
+              >
                 {open ? i18n.dupCollapse : i18n.dupExpand}
                 <ChevronDown
-                  className={`ml-1 h-4 w-4 transition-transform ${
+                  className={`h-4 w-4 transition-transform ${
                     open ? "rotate-180" : ""
                   }`}
                 />
@@ -82,14 +87,14 @@ export default function DuplicateReview({
         </CardHeader>
 
         <CollapsibleContent>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between gap-3 rounded-2xl bg-muted/40 p-3">
+          <CardContent className="space-y-3 pt-4">
+            <div className="flex items-center justify-between gap-4 rounded-2xl bg-muted/60 p-4">
               <Label
                 htmlFor="include-similar-names"
-                className="font-body text-sm leading-relaxed"
+                className="block text-sm font-medium"
               >
                 {i18n.dupIncludeSimilar}
-                <span className="block text-xs text-muted-foreground">
+                <span className="mt-0.5 block text-xs font-normal leading-relaxed text-muted-foreground">
                   {i18n.dupIncludeSimilarDesc}
                 </span>
               </Label>
@@ -101,7 +106,7 @@ export default function DuplicateReview({
             </div>
 
             {groups.length === 0 && (
-              <p className="py-4 text-center font-body text-sm text-muted-foreground">
+              <p className="py-6 text-center text-sm text-muted-foreground">
                 {i18n.dupEmpty}
               </p>
             )}
@@ -117,20 +122,21 @@ export default function DuplicateReview({
                   key={group.key}
                   className="space-y-3 rounded-2xl border p-4"
                 >
-                  <div className="flex flex-wrap items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-1.5">
                     {group.reasons.map(reason => (
-                      <Badge
+                      <span
                         key={reason}
-                        variant={
-                          reason === "nameSimilar" ? "outline" : "secondary"
-                        }
-                        className="rounded-full"
+                        className={`rounded-full px-2.5 py-1 text-xs font-medium ${
+                          reason === "nameSimilar"
+                            ? "border border-border text-muted-foreground"
+                            : "bg-brand-tint text-primary"
+                        }`}
                       >
                         {REASON_LABELS[reason]}
                         {reason === "nameSimilar" &&
                           group.nameFragments.length > 0 &&
                           ` · "${group.nameFragments.join('", "')}"`}
-                      </Badge>
+                      </span>
                     ))}
                     {isWeakGroup(group) && (
                       <span className="text-xs text-muted-foreground">
@@ -139,63 +145,82 @@ export default function DuplicateReview({
                     )}
                   </div>
 
-                  <div className="space-y-2">
-                    {members.map(contact => (
-                      <label
-                        key={contact.id}
-                        className={`flex cursor-pointer items-start gap-3 rounded-xl border p-3 transition-colors ${
-                          contact.id === primaryId
-                            ? "border-primary bg-primary/5"
-                            : "border-transparent bg-muted/30"
-                        }`}
-                      >
-                        <input
-                          type="radio"
-                          name={`primary-${group.key}`}
-                          checked={contact.id === primaryId}
-                          onChange={() =>
-                            setPrimaryByGroup(prev => ({
-                              ...prev,
-                              [group.key]: contact.id,
-                            }))
-                          }
-                          className="mt-1 accent-primary"
-                        />
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate font-medium">{contact.fn}</p>
-                          <p className="truncate font-body text-xs text-muted-foreground">
-                            {[
-                              contact.org,
-                              ...(contact.tel ?? []),
-                              ...(contact.email ?? []),
-                            ]
-                              .filter(Boolean)
-                              .join(" · ") || i18n.dupNoDetail}
-                          </p>
-                        </div>
-                        {contact.id === primaryId && (
-                          <Badge variant="secondary" className="rounded-full">
-                            {i18n.dupPrimary}
-                          </Badge>
-                        )}
-                      </label>
-                    ))}
+                  <div className="space-y-1.5">
+                    {members.map(contact => {
+                      const isPrimary = contact.id === primaryId;
+                      return (
+                        <label
+                          key={contact.id}
+                          className={`press flex cursor-pointer items-center gap-3 rounded-xl border p-3 ${
+                            isPrimary
+                              ? "border-primary/40 bg-brand-tint"
+                              : "border-transparent bg-muted/40"
+                          }`}
+                        >
+                          {/* 라디오 대신 체크 원. 어느 쪽을 남기는지가 한눈에 보인다 */}
+                          <input
+                            type="radio"
+                            name={`primary-${group.key}`}
+                            checked={isPrimary}
+                            onChange={() =>
+                              setPrimaryByGroup(prev => ({
+                                ...prev,
+                                [group.key]: contact.id,
+                              }))
+                            }
+                            className="sr-only"
+                          />
+                          <span
+                            aria-hidden
+                            className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 ${
+                              isPrimary
+                                ? "border-primary bg-primary"
+                                : "border-input"
+                            }`}
+                          >
+                            {isPrimary && (
+                              <Check
+                                className="h-3 w-3 text-primary-foreground"
+                                strokeWidth={3}
+                              />
+                            )}
+                          </span>
+                          <span className="min-w-0 flex-1">
+                            <span className="block truncate text-[15px] font-semibold">
+                              {contact.fn}
+                            </span>
+                            <span className="break-anywhere block truncate text-xs text-muted-foreground">
+                              {[
+                                contact.org,
+                                ...(contact.tel ?? []),
+                                ...(contact.email ?? []),
+                              ]
+                                .filter(Boolean)
+                                .join(" · ") || i18n.dupNoDetail}
+                            </span>
+                          </span>
+                          {isPrimary && (
+                            <span className="shrink-0 rounded-full bg-primary px-2.5 py-1 text-xs font-semibold text-primary-foreground">
+                              {i18n.dupPrimary}
+                            </span>
+                          )}
+                        </label>
+                      );
+                    })}
                   </div>
 
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex gap-2">
                     <Button
-                      size="sm"
-                      className="rounded-xl"
                       onClick={() => onMerge(group, primaryId)}
+                      className="press h-11 flex-1 rounded-xl font-bold"
                     >
-                      <Merge className="mr-1 h-4 w-4" />
+                      <Merge className="h-4 w-4" />
                       {i18n.dupMerge}
                     </Button>
                     <Button
-                      size="sm"
                       variant="ghost"
-                      className="rounded-xl"
                       onClick={() => onIgnore(group)}
+                      className="press h-11 rounded-xl px-4 font-semibold text-muted-foreground"
                     >
                       {i18n.dupIgnore}
                     </Button>

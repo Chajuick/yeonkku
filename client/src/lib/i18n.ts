@@ -5,15 +5,15 @@
 export const i18n = {
   // App title
   appTitle: "연꾸",
-  appSubtitle: "제각각인 연락처 이름을 prefix·suffix로 한 번에 정리하는 도구",
+  appSubtitle: "제각각인 연락처 이름을 prefix·suffix로 한 번에 정리하는 도구",
 
   // 첫 방문 온보딩
   welcomeBadge: "처음 오셨나요?",
-  welcomeTitle: "제각각인 연락처 이름, 한 번에 같은 형식으로",
+  welcomeTitle: "제각각인 연락처 이름, 한 번에 같은 형식으로",
   welcomeDescription:
-    "[연꾸사] 김민수님, 연꾸사-김민수 처럼 저장할 때마다 형식이 달라진 연락처를, 앞뒤에 붙은 것을 떼고 통일된 형식으로 한 번에 다시 붙여 정리합니다. 파일은 이 브라우저 안에서만 처리되고 어디로도 전송되지 않아요.",
+    "[연꾸사] 김민수님, 연꾸사-김민수 처럼 저장할 때마다 형식이 달라진 연락처를, 앞뒤에 붙은 것을 떼고 통일된 형식으로 한 번에 다시 붙여 정리합니다. 파일은 이 브라우저 안에서만 처리되고 어디로도 전송되지 않아요.",
   welcomeBefore: "제각각으로 저장된 연락처",
-  welcomeAfter: "한 번에 정리한 결과",
+  welcomeAfter: "한 번에 정리한 결과",
   welcomeBeforeSamples: ["[연꾸사] 김민수님", "연꾸사-이서연 님", "박준호"],
   welcomeAfterSamples: [
     "[연꾸사] 김민수 님",
@@ -24,31 +24,31 @@ export const i18n = {
   welcomeStep1Desc: "폰 연락처를 .vcf 파일로 내보내 여기에 올려요",
   welcomeStep2Title: "정리하기",
   welcomeStep2Desc:
-    "붙어 있던 표기를 떼고, 통일할 형식(앞: [연꾸사] / 뒤: 님)을 골라 한 번에 적용해요",
+    "붙어 있던 표기를 떼고, 통일할 형식(앞: [연꾸사] / 뒤: 님)을 골라 한 번에 적용해요",
   welcomeStep3Title: "내보내기",
   welcomeStep3Desc: "새 .vcf 파일을 내려받아 폰 연락처에 다시 넣으면 끝",
   welcomeTrySample: "샘플 연락처로 먼저 둘러보기",
   welcomeTrySampleHint:
-    "형식이 뒤죽박죽인 샘플 5개로 정리 과정을 체험할 수 있어요",
+    "형식이 뒤죽박죽인 샘플 5개로 정리 과정을 체험할 수 있어요",
   welcomeSampleLoaded: "샘플 연락처 5개를 불러왔어요",
   welcomeSampleLoadedDesc:
-    "마음껏 눌러보세요. 설정 탭의 [모든 데이터 삭제]로 언제든 지울 수 있어요.",
+    "마음껏 눌러보세요. 설정 탭의 [모든 데이터 삭제]로 언제든 지울 수 있어요.",
   // .vcf 파일 꺼내는 법 (첫 사용자가 가장 많이 막히는 지점)
   vcfGuideTitle: "연락처 파일(.vcf)은 이렇게 꺼내요",
   vcfGuideDescription:
     "폰에 저장된 연락처를 파일 하나로 내보내는 과정이에요. 내 기기에 맞는 탭을 열어보세요.",
   vcfGuideNote:
-    "기기와 OS 버전에 따라 메뉴 이름이 조금 다를 수 있어요. 비슷한 이름을 찾아보세요.",
+    "기기와 OS 버전에 따라 메뉴 이름이 조금 다를 수 있어요. 비슷한 이름을 찾아보세요.",
   vcfGuidePlatforms: [
     {
       id: "iphone",
       label: "아이폰",
       steps: [
         "연락처 앱을 열어요",
-        "연락처 하나를 길게 누른 뒤, 옮기고 싶은 연락처들을 이어서 탭해 여러 개 선택해요 (iOS 16 이상)",
+        "연락처 하나를 길게 누른 뒤, 옮기고 싶은 연락처들을 이어서 탭해 여러 개 선택해요 (iOS 16 이상)",
         "공유 버튼 → [파일에 저장]을 눌러 저장하면 .vcf 파일이 만들어져요",
       ],
-      tip: "연락처가 많으면 PC 브라우저에서 iCloud.com → 연락처 → 왼쪽 아래 톱니바퀴(또는 ··· 메뉴) → [vCard 내보내기]로 한 번에 받는 게 편해요.",
+      tip: "연락처가 많으면 PC 브라우저에서 iCloud.com → 연락처 → 왼쪽 아래 톱니바퀴(또는 ··· 메뉴) → [vCard 내보내기]로 한 번에 받는 게 편해요.",
     },
     {
       id: "android",
@@ -77,11 +77,11 @@ export const i18n = {
     "내 메일 주소로 파일을 첨부해 보내고 PC에서 내려받기",
   ],
   vcfGuideMobileHint:
-    "폰에서 이 페이지를 열면 방금 저장한 파일을 바로 올릴 수 있어요.",
+    "폰에서 이 페이지를 열면 방금 저장한 파일을 바로 올릴 수 있어요.",
   // 그룹 관리
   groupTitle: "그룹 만들기",
   groupDescription:
-    "연락처를 넣어둘 그룹을 미리 만들어 두세요. 연락처 탭에서 체크한 뒤 [그룹 지정]으로 한 번에 넣을 수 있어요.",
+    "연락처를 넣어둘 그룹을 미리 만들어 두세요. 연락처 탭에서 체크한 뒤 [그룹 지정]으로 한 번에 넣을 수 있어요.",
   groupPlaceholder: "예: 연꾸재단, 동호회, 거래처",
   groupAdd: "추가",
   groupEmpty: "아직 만든 그룹이 없습니다",
@@ -110,7 +110,7 @@ export const i18n = {
         "연락처 미리보기가 뜨면 [모든 연락처 추가]를 누릅니다",
         "연락처 앱에서 반영된 이름을 확인합니다",
       ],
-      tip: "PC에서 한 번에 넣으려면 iCloud.com → 연락처 → 톱니바퀴 → [vCard 가져오기]를 쓰세요.",
+      tip: "PC에서 한 번에 넣으려면 iCloud.com → 연락처 → 톱니바퀴 → [vCard 가져오기]를 쓰세요.",
     },
     {
       id: "android",
@@ -135,20 +135,20 @@ export const i18n = {
   ],
   applyGuideWarningTitle: "덮어쓰기가 아니라 추가됩니다",
   applyGuideWarning:
-    "대부분의 폰은 .vcf를 가져올 때 기존 연락처를 바꾸지 않고 새로 추가합니다. 그대로 넣으면 이름만 다른 사본이 생겨 연락처가 두 배가 됩니다.",
+    "대부분의 폰은 .vcf를 가져올 때 기존 연락처를 바꾸지 않고 새로 추가합니다. 그대로 넣으면 이름만 다른 사본이 생겨 연락처가 두 배가 됩니다.",
   applyGuideWarningSteps: [
-    "넣기 전에 지금 폰 연락처를 .vcf로 한 번 내보내 백업해두세요",
+    "넣기 전에 지금 폰 연락처를 .vcf로 한 번 내보내 백업해두세요",
     "기존 연락처를 지운 뒤 넣거나, 넣은 다음 중복 병합 기능으로 정리하세요",
   ],
 
   // 중복 의심 연락처
   dupTitle: "중복 의심 연락처",
-  dupGroupCount: "개 그룹이 같은 사람일 수 있어요",
+  dupGroupCount: "개 그룹이 같은 사람일 수 있어요",
   dupExpand: "살펴보기",
   dupCollapse: "접기",
   dupIncludeSimilar: "이름이 비슷한 경우도 찾기",
   dupIncludeSimilarDesc:
-    "이름이 두 글자 이상 겹치면 후보로 올립니다. 동명이인·같은 성씨까지 잡혀 목록이 늘어날 수 있어요.",
+    "이름이 두 글자 이상 겹치면 후보로 올립니다. 동명이인·같은 성씨까지 잡혀 목록이 늘어날 수 있어요.",
   dupReasonTel: "전화번호 같음",
   dupReasonEmail: "이메일 같음",
   dupReasonName: "이름 같음",
@@ -165,7 +165,7 @@ export const i18n = {
   // 다음 단계 안내
   nextStepTitle: "이제 뭘 하면 되나요?",
   nextStepDesc:
-    "정리할 연락처를 체크하면 아래에 적용·제거 버튼이 나타나요. 붙이거나 뗄 표기는 [2 정리하기] 탭에서 만들 수 있어요.",
+    "정리할 연락처를 체크하면 아래에 적용·제거 버튼이 나타나요. 붙이거나 뗄 표기는 [2 정리하기] 탭에서 만들 수 있어요.",
 
   // Tabs
   tabContacts: "연락처",
@@ -178,8 +178,8 @@ export const i18n = {
   // Import section
   importTitle: "연락처 가져오기",
   importDescription: ".vcf 파일을 업로드하세요",
-  importDragDrop: ".vcf 파일을 여기로 드래그하세요",
-  importOrClick: "또는 클릭하여 선택",
+  importDragDrop: ".vcf 파일을 올려주세요",
+  importOrClick: "이 영역을 누르거나 파일을 끌어다 놓으세요",
   importSelectFile: "파일 선택",
   importSupportsVersions: "vCard 2.1, 3.0, 4.0 지원",
   importDataLocal: "데이터는 로컬에서만 처리되며 서버로 전송되지 않습니다.",
@@ -189,8 +189,8 @@ export const i18n = {
   contactsTitle: "연락처",
   contactsCount: "개",
   contactsSelected: "개 선택됨",
-  contactsSearch: "이름, 전화, 이메일로 검색...",
-  contactsTableName: "이름 (FN)",
+  contactsSearch: "이름·전화·이메일 검색",
+  contactsTableName: "이름",
   contactsTableOrg: "그룹",
   contactsTablePhone: "전화",
   contactsTableEmail: "이메일",
@@ -201,11 +201,11 @@ export const i18n = {
   contactsDeleted: "연락처가 삭제되었습니다",
 
   // Prefix/Suffix - 이름
-  prefixTitle: "Prefix",
-  prefixDescription: "이름 앞에 붙을 텍스트/이모지를 추가하세요",
+  prefixTitle: "이름 앞에 붙일 표기",
+  prefixDescription: "이름 앞에 붙일 글자나 이모지를 등록해요",
   prefixPlaceholder: "예: Mr., Dr., 🎓",
-  suffixTitle: "Suffix",
-  suffixDescription: "이름 뒤에 붙을 텍스트/이모지를 추가하세요",
+  suffixTitle: "이름 뒤에 붙일 표기",
+  suffixDescription: "이름 뒤에 붙일 글자나 이모지를 등록해요",
   suffixPlaceholder: "예: Jr., PhD, ✨",
   prefixSuffixEmpty: "아직 없습니다",
   prefixSuffixAdded: "추가되었습니다",
@@ -216,11 +216,11 @@ export const i18n = {
   // Prefix/Suffix - 회사
   tabName: "이름",
   tabOrg: "그룹",
-  orgPrefixTitle: "Prefix",
-  orgPrefixDescription: "그룹명 앞에 붙을 텍스트/이모지를 추가하세요",
+  orgPrefixTitle: "그룹명 앞에 붙일 표기",
+  orgPrefixDescription: "그룹명 앞에 붙일 글자나 이모지를 등록해요",
   orgPrefixPlaceholder: "예: 🏢, (주), ★",
-  orgSuffixTitle: "Suffix",
-  orgSuffixDescription: "그룹명 뒤에 붙을 텍스트/이모지를 추가하세요",
+  orgSuffixTitle: "그룹명 뒤에 붙일 표기",
+  orgSuffixDescription: "그룹명 뒤에 붙일 글자나 이모지를 등록해요",
   orgSuffixPlaceholder: "예: Corp., Inc., 팀",
 
   // Batch actions
@@ -236,11 +236,11 @@ export const i18n = {
   batchAllDisabled: "모두 꺼져 있어요 (정리하기 탭에서 켜세요)",
   batchExistingGroups: "기존 그룹",
   batchNoGroups: "아직 그룹이 없습니다",
-  batchNewGroup: "새 그룹에 넣기...",
+  batchNewGroup: "새 그룹에 넣기...",
   batchClearGroup: "그룹 비우기",
-  batchNewGroupTitle: "새 그룹 이름",
+  batchNewGroupTitle: "새 그룹 이름",
   batchNewGroupPlaceholder: "예: 연꾸재단, 동호회, 거래처",
-  batchNewGroupConfirm: "이 그룹에 넣기",
+  batchNewGroupConfirm: "이 그룹에 넣기",
   batchGroupAssigned: "개를 그룹에 넣었습니다",
   batchGroupCleared: "개의 그룹을 비웠습니다",
   batchClearSelection: "선택 해제",
@@ -257,17 +257,17 @@ export const i18n = {
   // Settings
   settingsTitle: "설정",
   settingsSeparators: "구분자",
-  settingsPrefixSeparator: "Prefix 구분자 (prefix 뒤)",
-  settingsSuffixSeparator: "Suffix 구분자 (suffix 앞)",
+  settingsPrefixSeparator: "앞에 붙인 표기와 이름 사이",
+  settingsSuffixSeparator: "이름과 뒤에 붙인 표기 사이",
   settingsSave: "구분자 저장",
   settingsOptions: "옵션",
   settingsPreventDuplicates: "중복 방지",
   settingsPreventDuplicatesDesc:
-    "이름에 이미 있는 prefix/suffix는 다시 붙이지 않기",
+    "이름에 이미 들어 있는 표기는 다시 붙이지 않아요",
   settingsDangerZone: "위험 영역",
   settingsClearAll: "모든 데이터 삭제",
   settingsClearAllDesc:
-    "모든 연락처와 설정을 삭제합니다. 이 작업은 되돌릴 수 없습니다.",
+    "모든 연락처와 설정을 삭제합니다. 이 작업은 되돌릴 수 없습니다.",
   settingsSaved: "설정이 저장되었습니다",
 
   // Export
@@ -299,7 +299,7 @@ export const i18n = {
   // Confirm modal
   confirmClearAll: "모든 데이터를 삭제하시겠습니까?",
   confirmClearAllDesc:
-    "모든 연락처, prefix/suffix, 설정이 영구적으로 삭제됩니다. 이 작업은 되돌릴 수 없습니다.",
+    "모든 연락처, prefix/suffix, 설정이 영구적으로 삭제됩니다. 이 작업은 되돌릴 수 없습니다.",
   confirmClearAllButton: "모두 삭제",
   confirmCancel: "취소",
 

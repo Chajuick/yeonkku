@@ -21,8 +21,22 @@ function App() {
   return (
     <ErrorBoundary>
       <ThemeProvider>
-        <TooltipProvider>
-          <Toaster position="top-center" />
+        <TooltipProvider delayDuration={200}>
+          {/* 토스트는 상단 바 아래에 뜨게 offset을 준다. 하단은 일괄 작업
+              바가 차지하고 있어 겹친다. */}
+          <Toaster
+            position="top-center"
+            offset={72}
+            toastOptions={{
+              classNames: {
+                toast: "rounded-2xl border-border shadow-lg px-4 py-3.5 gap-3",
+                title: "text-sm font-semibold",
+                description: "text-xs leading-relaxed",
+                actionButton: "rounded-lg font-semibold",
+                cancelButton: "rounded-lg font-medium",
+              },
+            }}
+          />
           <Router />
         </TooltipProvider>
       </ThemeProvider>

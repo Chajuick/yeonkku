@@ -1,4 +1,3 @@
-import { cn } from "@/lib/utils";
 import { AlertTriangle, RotateCcw } from "lucide-react";
 import { Component, ReactNode } from "react";
 
@@ -24,32 +23,39 @@ class ErrorBoundary extends Component<Props, State> {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="flex items-center justify-center min-h-screen p-8 bg-background">
-          <div className="flex flex-col items-center w-full max-w-2xl p-8">
-            <AlertTriangle
-              size={48}
-              className="text-destructive mb-6 flex-shrink-0"
-            />
+        <div className="app-bg flex min-h-dvh items-center justify-center px-6 py-12">
+          <div className="w-full max-w-lg space-y-6 text-center">
+            <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-destructive/10">
+              <AlertTriangle className="h-7 w-7 text-destructive" />
+            </span>
 
-            <h2 className="text-xl mb-4">An unexpected error occurred.</h2>
-
-            <div className="p-4 w-full rounded bg-muted overflow-auto mb-6">
-              <pre className="text-sm text-muted-foreground whitespace-break-spaces">
-                {this.state.error?.stack}
-              </pre>
+            <div className="space-y-2">
+              <h2 className="text-xl font-bold tracking-tight">
+                화면을 그리다가 문제가 생겼어요
+              </h2>
+              <p className="text-sm leading-relaxed text-muted-foreground">
+                저장된 연락처는 그대로 남아 있어요. 새로고침하면 대부분 정상으로
+                돌아옵니다.
+              </p>
             </div>
 
             <button
               onClick={() => window.location.reload()}
-              className={cn(
-                "flex items-center gap-2 px-4 py-2 rounded-lg",
-                "bg-primary text-primary-foreground",
-                "hover:opacity-90 cursor-pointer"
-              )}
+              className="press inline-flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-primary text-base font-bold text-primary-foreground hover:opacity-90"
             >
-              <RotateCcw size={16} />
-              Reload Page
+              <RotateCcw className="h-4 w-4" />
+              새로고침
             </button>
+
+            {/* 원인은 접어 둔다. 평소에는 볼 일이 없고, 필요할 때만 펼친다 */}
+            <details className="text-left">
+              <summary className="cursor-pointer text-xs text-muted-foreground">
+                오류 자세히 보기
+              </summary>
+              <pre className="mt-2 max-h-56 overflow-auto rounded-2xl bg-muted p-4 font-mono text-xs whitespace-break-spaces text-muted-foreground">
+                {this.state.error?.stack}
+              </pre>
+            </details>
           </div>
         </div>
       );

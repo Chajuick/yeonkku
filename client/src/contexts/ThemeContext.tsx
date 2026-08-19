@@ -1,9 +1,22 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { DEFAULT_THEME, THEMES, type ThemeId } from "@/lib/themes";
+import {
+  accentOf,
+  composeThemeId,
+  isDarkTheme,
+  modeOf,
+  normalizeThemeId,
+  type ThemeAccent,
+  type ThemeId,
+  type ThemeMode,
+} from "@/lib/themes";
 
 interface ThemeContextType {
   themeId: ThemeId;
+  accent: ThemeAccent;
+  mode: ThemeMode;
   setTheme: (id: ThemeId) => void;
+  setAccent: (accent: ThemeAccent) => void;
+  setMode: (mode: ThemeMode) => void;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -13,36 +26,50 @@ interface ThemeProviderProps {
   defaultThemeId?: ThemeId;
 }
 
+/** 상단 상태바 색까지 테마를 따라가게 한다 (폰에서 PWA로 열었을 때 티가 난다) */
+function syncBrowserThemeColor() {
+  const bg = getComputedStyle(document.documentElement)
+    .getPropertyValue("--background")
+    .trim();
+  if (!bg) return;
+
+  for (const meta of document.querySelectorAll<HTMLMetaElement>(
+    'meta[name="theme-color"]'
+  )) {
+    meta.setAttribute("content", bg);
+  }
+}
+
 export function ThemeProvider({
   children,
-  defaultThemeId = DEFAULT_THEME,
+  defaultThemeId,
 }: ThemeProviderProps) {
-  const [themeId, setThemeId] = useState<ThemeId>(() => {
-    const stored = localStorage.getItem("theme-id");
-    return (stored as ThemeId) || defaultThemeId;
-  });
+  const [themeId, setThemeId] = useState<ThemeId>(() =>
+    normalizeThemeId(localStorage.getItem("theme-id") ?? defaultThemeId ?? null)
+  );
 
   useEffect(() => {
     const root = document.documentElement;
-    const meta = THEMES.find(t => t.id === themeId);
 
     root.setAttribute("data-theme", themeId);
-
-    if (meta?.isDark) {
-      root.classList.add("dark");
-    } else {
-      root.classList.remove("dark");
-    }
-
+    root.classList.toggle("dark", isDarkTheme(themeId));
     localStorage.setItem("theme-id", themeId);
+    syncBrowserThemeColor();
   }, [themeId]);
 
-  const setTheme = (id: ThemeId) => setThemeId(id);
+  const value: ThemeContextType = {
+    themeId,
+    accent: accentOf(themeId),
+    mode: modeOf(themeId),
+    setTheme: setThemeId,
+    setAccent: accent =>
+      setThemeId(current => composeThemeId(accent, modeOf(current))),
+    setMode: mode =>
+      setThemeId(current => composeThemeId(accentOf(current), mode)),
+  };
 
   return (
-    <ThemeContext.Provider value={{ themeId, setTheme }}>
-      {children}
-    </ThemeContext.Provider>
+    <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
   );
 }
 

@@ -168,8 +168,8 @@ const pwaPlugin = VitePWA({
     start_url: "/",
     scope: "/",
     display: "standalone",
-    background_color: "#f0faf4",
-    theme_color: "#5f9e7a",
+    background_color: "#f7f8fa",
+    theme_color: "#2c74dc",
     categories: ["productivity", "utilities"],
     icons: [
       {
@@ -199,9 +199,23 @@ const pwaPlugin = VitePWA({
     ],
   },
   workbox: {
-    globPatterns: ["**/*.{js,css,html,svg,png,ico,webmanifest,woff2}"],
+    globPatterns: ["**/*.{js,css,html,svg,png,ico,webmanifest}"],
+    // Pretendard 서브셋이 92개(3MB)라 전부 프리캐시하면 설치가 무거워진다.
+    // 실제로 쓰인 구간만 런타임에 캐시해 둔다.
+    globIgnores: ["**/fonts/**"],
     navigateFallback: "/index.html",
     cleanupOutdatedCaches: true,
+    runtimeCaching: [
+      {
+        urlPattern: ({ url }) => url.pathname.startsWith("/fonts/"),
+        handler: "CacheFirst",
+        options: {
+          cacheName: "pretendard-fonts",
+          expiration: { maxEntries: 40, maxAgeSeconds: 60 * 60 * 24 * 365 },
+          cacheableResponse: { statuses: [0, 200] },
+        },
+      },
+    ],
   },
 });
 

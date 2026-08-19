@@ -3,12 +3,13 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Contact } from "@/../../shared/types";
-import { Download, AlertCircle } from "lucide-react";
+import { Download, FileText, ShieldCheck } from "lucide-react";
 import { useState } from "react";
 import { contactsToVCardFile, generateExportFilename } from "@/lib/vcardParser";
 import { toast } from "sonner";
@@ -18,6 +19,8 @@ interface ExportButtonProps {
   contacts: Contact[];
   disabled?: boolean;
 }
+
+const PREVIEW_LENGTH = 500;
 
 /**
  * Export Button Component
@@ -57,28 +60,34 @@ export default function ExportButton({
     }
   };
 
-  const previewContent = contactsToVCardFile(contacts).substring(0, 500);
+  // 미리보기 때문에 전체 파일을 두 번 만들 필요는 없다
+  const fullContent = open ? contactsToVCardFile(contacts) : "";
+  const previewContent = fullContent.substring(0, PREVIEW_LENGTH);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button disabled={disabled || contacts.length === 0} size="lg">
-          <Download className="w-4 h-4 mr-2" />
+        <Button
+          disabled={disabled || contacts.length === 0}
+          className="press h-14 w-full rounded-2xl text-base font-bold"
+        >
+          <Download className="h-4 w-4" />
           {i18n.exportAsVcf}
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>{i18n.exportModalTitle}</DialogTitle>
+      <DialogContent className="max-w-2xl gap-4 rounded-3xl">
+        <DialogHeader className="space-y-1.5">
+          <DialogTitle className="text-xl font-bold">
+            {i18n.exportModalTitle}
+          </DialogTitle>
           <DialogDescription>{i18n.exportModalDescription}</DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
-          {/* Summary */}
-          <div className="p-3 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg flex gap-2">
-            <AlertCircle className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
-            <div className="text-sm text-blue-800 dark:text-blue-200">
-              <p className="font-medium">
+        <div className="space-y-3">
+          <div className="callout callout-info">
+            <FileText className="mt-0.5 h-4 w-4 shrink-0" />
+            <div>
+              <p className="tabular font-semibold">
                 {i18n.exportExporting}
                 {contacts.length}개
               </p>
@@ -86,26 +95,38 @@ export default function ExportButton({
             </div>
           </div>
 
-          {/* Preview */}
           <div>
-            <label className="text-sm font-medium">{i18n.exportPreview}</label>
-            <pre className="mt-2 p-3 bg-muted rounded-lg text-xs overflow-auto max-h-64 whitespace-pre-wrap break-words">
+            <p className="mb-2 text-xs font-semibold text-muted-foreground">
+              {i18n.exportPreview}
+            </p>
+            <pre className="max-h-56 overflow-auto rounded-2xl bg-muted p-4 font-mono text-xs leading-relaxed whitespace-pre-wrap break-words">
               {previewContent}
-              {contactsToVCardFile(contacts).length > 500 && "..."}
+              {fullContent.length > PREVIEW_LENGTH && "..."}
             </pre>
           </div>
 
-          {/* Actions */}
-          <div className="flex gap-2 justify-end">
-            <Button variant="outline" onClick={() => setOpen(false)}>
-              {i18n.exportCancel}
-            </Button>
-            <Button onClick={handleExport}>
-              <Download className="w-4 h-4 mr-2" />
-              {i18n.exportDownload}
-            </Button>
+          <div className="callout callout-muted">
+            <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" />
+            <p>파일은 이 브라우저에서 만들어져 바로 내려받습니다.</p>
           </div>
         </div>
+
+        <DialogFooter className="gap-2 sm:gap-2">
+          <Button
+            variant="secondary"
+            onClick={() => setOpen(false)}
+            className="press h-13 flex-1 rounded-2xl text-base font-semibold"
+          >
+            {i18n.exportCancel}
+          </Button>
+          <Button
+            onClick={handleExport}
+            className="press h-13 flex-1 rounded-2xl text-base font-bold"
+          >
+            <Download className="h-4 w-4" />
+            {i18n.exportDownload}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

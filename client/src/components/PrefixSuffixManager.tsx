@@ -8,13 +8,13 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 import { PrefixSuffixItem } from "@/../../shared/types";
 import { Plus, Trash2, ChevronUp, ChevronDown } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { i18n } from "@/lib/i18n";
-import { TAB_TRIGGER_CLASS } from "@/lib/tabStyles";
+import { TAB_LIST_CLASS, TAB_TRIGGER_CLASS } from "@/lib/tabStyles";
 
 interface PrefixSuffixManagerProps {
   prefixList: PrefixSuffixItem[];
@@ -49,207 +49,156 @@ function ItemList({
   onMoveUp: (index: number) => void;
   onMoveDown: (index: number) => void;
 }) {
+  if (items.length === 0) {
+    return (
+      <p className="rounded-2xl bg-muted/50 py-6 text-center text-sm text-muted-foreground">
+        {i18n.prefixSuffixEmpty}
+      </p>
+    );
+  }
+
   return (
-    <div className="space-y-2">
-      {items.length === 0 ? (
-        <p className="text-sm text-muted-foreground py-4 text-center">
-          {i18n.prefixSuffixEmpty}
-        </p>
-      ) : (
-        items.map((item, index) => (
-          <div
-            key={item.id}
-            className="flex items-center gap-2 p-2 bg-muted/50 rounded-lg group"
+    <ul className="space-y-1.5">
+      {items.map((item, index) => (
+        <li
+          key={item.id}
+          className="group flex items-center gap-2 rounded-2xl bg-muted/50 py-2 pl-4 pr-2"
+        >
+          {/* 체크박스 대신 스위치. "쓸지 말지"라는 뜻이 더 분명하게 보인다 */}
+          <Switch
+            checked={item.enabled}
+            onCheckedChange={() => onToggle(item.id)}
+            aria-label={`${item.text} 사용`}
+          />
+          <span
+            className={`min-w-0 flex-1 truncate text-[15px] font-medium ${
+              item.enabled ? "" : "text-muted-foreground line-through"
+            }`}
           >
-            <Checkbox
-              checked={item.enabled}
-              onCheckedChange={() => onToggle(item.id)}
-            />
-            <span
-              className={`flex-1 ${item.enabled ? "" : "line-through text-muted-foreground"}`}
+            {item.text}
+          </span>
+          <div className="flex shrink-0 gap-0.5 opacity-60 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
+            <Button
+              size="icon-sm"
+              variant="ghost"
+              aria-label="위로"
+              onClick={() => onMoveUp(index)}
+              disabled={index === 0}
+              className="press rounded-lg text-muted-foreground"
             >
-              {item.text}
-            </span>
-            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => onMoveUp(index)}
-                disabled={index === 0}
-                className="h-8 w-8 p-0"
-              >
-                <ChevronUp className="w-4 h-4" />
-              </Button>
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => onMoveDown(index)}
-                disabled={index === items.length - 1}
-                className="h-8 w-8 p-0"
-              >
-                <ChevronDown className="w-4 h-4" />
-              </Button>
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => onDelete(item.id)}
-                className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-              >
-                <Trash2 className="w-4 h-4" />
-              </Button>
-            </div>
+              <ChevronUp className="h-4 w-4" />
+            </Button>
+            <Button
+              size="icon-sm"
+              variant="ghost"
+              aria-label="아래로"
+              onClick={() => onMoveDown(index)}
+              disabled={index === items.length - 1}
+              className="press rounded-lg text-muted-foreground"
+            >
+              <ChevronDown className="h-4 w-4" />
+            </Button>
+            <Button
+              size="icon-sm"
+              variant="ghost"
+              aria-label={`${item.text} 삭제`}
+              onClick={() => onDelete(item.id)}
+              className="press rounded-lg text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
           </div>
-        ))
-      )}
-    </div>
+        </li>
+      ))}
+    </ul>
   );
 }
 
-function PrefixSuffixSection({
-  prefixList,
-  suffixList,
-  prefixPlaceholder,
-  suffixPlaceholder,
-  prefixTitle,
-  prefixDescription,
-  suffixTitle,
-  suffixDescription,
-  onPrefixChange,
-  onSuffixChange,
+/** 표기 하나를 관리하는 카드 (앞에 붙일 것 / 뒤에 붙일 것) */
+function ItemCard({
+  title,
+  description,
+  placeholder,
+  kind,
+  items,
+  onChange,
 }: {
-  prefixList: PrefixSuffixItem[];
-  suffixList: PrefixSuffixItem[];
-  prefixPlaceholder: string;
-  suffixPlaceholder: string;
-  prefixTitle: string;
-  prefixDescription: string;
-  suffixTitle: string;
-  suffixDescription: string;
-  onPrefixChange: (items: PrefixSuffixItem[]) => void;
-  onSuffixChange: (items: PrefixSuffixItem[]) => void;
+  title: string;
+  description: string;
+  placeholder: string;
+  /** 저장되는 항목의 종류. 앞에 붙이는 것과 뒤에 붙이는 것을 구분해 둔다 */
+  kind: "prefix" | "suffix";
+  items: PrefixSuffixItem[];
+  onChange: (items: PrefixSuffixItem[]) => void;
 }) {
-  const [prefixInput, setPrefixInput] = useState("");
-  const [suffixInput, setSuffixInput] = useState("");
+  const [input, setInput] = useState("");
 
-  const addPrefix = () => {
-    if (!prefixInput.trim()) {
+  const add = () => {
+    const text = input.trim();
+    if (!text) {
       toast.error(i18n.prefixSuffixEmpty2);
       return;
     }
-    if (prefixList.some(p => p.text === prefixInput.trim())) {
+    if (items.some(item => item.text === text)) {
       toast.error(i18n.prefixSuffixDuplicate);
       return;
     }
-    onPrefixChange([...prefixList, makeItem(prefixInput.trim(), "prefix")]);
-    setPrefixInput("");
+    onChange([...items, makeItem(text, kind)]);
+    setInput("");
     toast.success(i18n.prefixSuffixAdded);
   };
 
-  const addSuffix = () => {
-    if (!suffixInput.trim()) {
-      toast.error(i18n.prefixSuffixEmpty2);
-      return;
-    }
-    if (suffixList.some(s => s.text === suffixInput.trim())) {
-      toast.error(i18n.prefixSuffixDuplicate);
-      return;
-    }
-    onSuffixChange([...suffixList, makeItem(suffixInput.trim(), "suffix")]);
-    setSuffixInput("");
-    toast.success(i18n.prefixSuffixAdded);
-  };
-
-  const move = (
-    list: PrefixSuffixItem[],
-    i: number,
-    dir: -1 | 1,
-    onChange: (items: PrefixSuffixItem[]) => void
-  ) => {
-    const next = i + dir;
-    if (next < 0 || next >= list.length) return;
-    const newList = [...list];
-    [newList[i], newList[next]] = [newList[next], newList[i]];
-    onChange(newList);
+  const move = (index: number, dir: -1 | 1) => {
+    const next = index + dir;
+    if (next < 0 || next >= items.length) return;
+    const list = [...items];
+    [list[index], list[next]] = [list[next], list[index]];
+    onChange(list);
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">{prefixTitle}</CardTitle>
-          <CardDescription>{prefixDescription}</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex gap-2">
-            <Input
-              placeholder={prefixPlaceholder}
-              value={prefixInput}
-              onChange={e => setPrefixInput(e.target.value)}
-              onKeyDown={e => {
-                if (e.key === "Enter") addPrefix();
-              }}
-            />
-            <Button onClick={addPrefix} size="sm">
-              <Plus className="w-4 h-4" />
-            </Button>
-          </div>
-          <ItemList
-            items={prefixList}
-            onToggle={id =>
-              onPrefixChange(
-                prefixList.map(p =>
-                  p.id === id ? { ...p, enabled: !p.enabled } : p
-                )
-              )
-            }
-            onDelete={id => {
-              onPrefixChange(prefixList.filter(p => p.id !== id));
-              toast.success(i18n.prefixSuffixDeleted);
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base">{title}</CardTitle>
+        <CardDescription>{description}</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="flex gap-2">
+          <Input
+            placeholder={placeholder}
+            value={input}
+            onChange={e => setInput(e.target.value)}
+            onKeyDown={e => {
+              if (e.key === "Enter") add();
             }}
-            onMoveUp={i => move(prefixList, i, -1, onPrefixChange)}
-            onMoveDown={i => move(prefixList, i, 1, onPrefixChange)}
+            className="h-12 rounded-xl border-transparent bg-muted px-4"
           />
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">{suffixTitle}</CardTitle>
-          <CardDescription>{suffixDescription}</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex gap-2">
-            <Input
-              placeholder={suffixPlaceholder}
-              value={suffixInput}
-              onChange={e => setSuffixInput(e.target.value)}
-              onKeyDown={e => {
-                if (e.key === "Enter") addSuffix();
-              }}
-            />
-            <Button onClick={addSuffix} size="sm">
-              <Plus className="w-4 h-4" />
-            </Button>
-          </div>
-          <ItemList
-            items={suffixList}
-            onToggle={id =>
-              onSuffixChange(
-                suffixList.map(s =>
-                  s.id === id ? { ...s, enabled: !s.enabled } : s
-                )
+          <Button
+            onClick={add}
+            aria-label="추가"
+            className="press h-12 w-12 shrink-0 rounded-xl"
+          >
+            <Plus className="h-5 w-5" />
+          </Button>
+        </div>
+        <ItemList
+          items={items}
+          onToggle={id =>
+            onChange(
+              items.map(item =>
+                item.id === id ? { ...item, enabled: !item.enabled } : item
               )
-            }
-            onDelete={id => {
-              onSuffixChange(suffixList.filter(s => s.id !== id));
-              toast.success(i18n.prefixSuffixDeleted);
-            }}
-            onMoveUp={i => move(suffixList, i, -1, onSuffixChange)}
-            onMoveDown={i => move(suffixList, i, 1, onSuffixChange)}
-          />
-        </CardContent>
-      </Card>
-    </div>
+            )
+          }
+          onDelete={id => {
+            onChange(items.filter(item => item.id !== id));
+            toast.success(i18n.prefixSuffixDeleted);
+          }}
+          onMoveUp={index => move(index, -1)}
+          onMoveDown={index => move(index, 1)}
+        />
+      </CardContent>
+    </Card>
   );
 }
 
@@ -264,8 +213,8 @@ export default function PrefixSuffixManager({
   onOrgSuffixChange,
 }: PrefixSuffixManagerProps) {
   return (
-    <Tabs defaultValue="name">
-      <TabsList className="mb-4">
+    <Tabs defaultValue="name" className="gap-3">
+      <TabsList className={`${TAB_LIST_CLASS} grid grid-cols-2`}>
         <TabsTrigger value="name" className={TAB_TRIGGER_CLASS}>
           {i18n.tabName}
         </TabsTrigger>
@@ -274,33 +223,47 @@ export default function PrefixSuffixManager({
         </TabsTrigger>
       </TabsList>
 
-      <TabsContent value="name">
-        <PrefixSuffixSection
-          prefixList={prefixList}
-          suffixList={suffixList}
-          prefixTitle={i18n.prefixTitle}
-          prefixDescription={i18n.prefixDescription}
-          prefixPlaceholder={i18n.prefixPlaceholder}
-          suffixTitle={i18n.suffixTitle}
-          suffixDescription={i18n.suffixDescription}
-          suffixPlaceholder={i18n.suffixPlaceholder}
-          onPrefixChange={onPrefixChange}
-          onSuffixChange={onSuffixChange}
+      <TabsContent
+        value="name"
+        className="grid grid-cols-1 gap-3 md:grid-cols-2"
+      >
+        <ItemCard
+          title={i18n.prefixTitle}
+          kind="prefix"
+          description={i18n.prefixDescription}
+          placeholder={i18n.prefixPlaceholder}
+          items={prefixList}
+          onChange={onPrefixChange}
+        />
+        <ItemCard
+          title={i18n.suffixTitle}
+          kind="suffix"
+          description={i18n.suffixDescription}
+          placeholder={i18n.suffixPlaceholder}
+          items={suffixList}
+          onChange={onSuffixChange}
         />
       </TabsContent>
 
-      <TabsContent value="org">
-        <PrefixSuffixSection
-          prefixList={orgPrefixList}
-          suffixList={orgSuffixList}
-          prefixTitle={i18n.orgPrefixTitle}
-          prefixDescription={i18n.orgPrefixDescription}
-          prefixPlaceholder={i18n.orgPrefixPlaceholder}
-          suffixTitle={i18n.orgSuffixTitle}
-          suffixDescription={i18n.orgSuffixDescription}
-          suffixPlaceholder={i18n.orgSuffixPlaceholder}
-          onPrefixChange={onOrgPrefixChange}
-          onSuffixChange={onOrgSuffixChange}
+      <TabsContent
+        value="org"
+        className="grid grid-cols-1 gap-3 md:grid-cols-2"
+      >
+        <ItemCard
+          title={i18n.orgPrefixTitle}
+          kind="prefix"
+          description={i18n.orgPrefixDescription}
+          placeholder={i18n.orgPrefixPlaceholder}
+          items={orgPrefixList}
+          onChange={onOrgPrefixChange}
+        />
+        <ItemCard
+          title={i18n.orgSuffixTitle}
+          kind="suffix"
+          description={i18n.orgSuffixDescription}
+          placeholder={i18n.orgSuffixPlaceholder}
+          items={orgSuffixList}
+          onChange={onOrgSuffixChange}
         />
       </TabsContent>
     </Tabs>
